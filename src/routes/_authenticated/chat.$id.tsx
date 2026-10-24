@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -140,7 +140,7 @@ function ConversationPage() {
     qc.invalidateQueries({ queryKey: ["conversations"] });
   }
 
-  async function submitText(e: React.FormEvent) {
+  async function submitText(e: FormEvent) {
     e.preventDefault();
     const t = text.trim();
     if (!t) return;

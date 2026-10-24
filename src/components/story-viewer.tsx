@@ -36,10 +36,11 @@ export function StoryViewer({
     } else onClose();
   };
   const prev = () => {
+    const prevGroup = gi > 0 ? groups[gi - 1] : undefined;
     if (si > 0) setSi(si - 1);
-    else if (gi > 0) {
+    else if (prevGroup) {
       setGi(gi - 1);
-      setSi(groups[gi - 1].stories.length - 1);
+      setSi(prevGroup.stories.length - 1);
     }
   };
 

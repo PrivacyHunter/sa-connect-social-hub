@@ -2,8 +2,8 @@ import { useMediaSrc } from "@/hooks/use-media-url";
 import { cn } from "@/lib/utils";
 
 interface MediaImageProps {
-  bucket?: string | null;
-  path?: string | null;
+  bucket?: string | null | undefined;
+  path?: string | null | undefined;
   alt: string;
   className?: string;
 }
