@@ -36,8 +36,8 @@ export function ComposePostDialog({
         .select("id")
         .single();
       if (error) throw error;
-      for (let i = 0; i < files.length; i++) {
-        const path = await uploadFile("media", files[i]);
+      for (const [i, file] of files.entries()) {
+        const path = await uploadFile("media", file);
         const { error: mErr } = await supabase
           .from("post_media")
           .insert({ post_id: post.id, url: path, position: i });

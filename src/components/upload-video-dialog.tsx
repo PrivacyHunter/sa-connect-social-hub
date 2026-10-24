@@ -43,8 +43,14 @@ export function UploadVideoDialog({
   }
 
   async function submit() {
-    if (!file) return toast.error(isReel ? "Pick a video first" : "Pick a video first");
-    if (!isReel && !title.trim()) return toast.error("Give your video a title");
+    if (!file) {
+      toast.error("Pick a video first");
+      return;
+    }
+    if (!isReel && !title.trim()) {
+      toast.error("Give your video a title");
+      return;
+    }
     setBusy(true);
     try {
       const { data } = await supabase.auth.getUser();
@@ -58,7 +64,6 @@ export function UploadVideoDialog({
           video_url: videoPath,
           caption,
           music_title: music.trim() || null,
-          duration_seconds: duration,
         });
         if (error) throw error;
         toast.success("Reel published");

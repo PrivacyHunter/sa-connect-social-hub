@@ -44,13 +44,27 @@ function WatchPage() {
     queryFn: async (): Promise<Video> => {
       const { data, error } = await supabase
         .from("videos")
-        .select("*, profiles(*), video_likes(user_id, value), video_bookmarks(user_id), subscriptions(subscriber_id)")
+        .select("*, profiles(*), video_likes(user_id, value), video_bookmarks(user_id)")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Video not found");
       return data as Video;
     },
+  });
+
+  const mySub = useQuery({
+    queryKey: ["my-sub", v?.channel_id, me?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("subscriptions")
+        .select("channel_id", { count: "exact", head: true })
+        .eq("subscriber_id", me!.id)
+        .eq("channel_id", v!.channel_id);
+      if (error) throw error;
+      return (count ?? 0) > 0;
+    },
+    enabled: !!me && !!v,
   });
 
   const related = useQuery({
@@ -81,7 +95,7 @@ function WatchPage() {
   const v = video.data;
   const myRating = v?.video_likes.find((l) => l.user_id === me?.id)?.value ?? 0;
   const saved = v?.video_bookmarks.some((b) => b.user_id === me?.id) ?? false;
-  const subscribed = v?.subscriptions.some((s) => s.subscriber_id === me?.id) ?? false;
+  const subscribed = mySub.data ?? false;
   const src = useVideoSrc(v?.video_url);
 
   const rate = useMutation({
@@ -119,7 +133,7 @@ function WatchPage() {
       else await supabase.from("subscriptions").insert({ channel_id: v.channel_id, subscriber_id: me.id });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["video", id] });
+      qc.invalidateQueries({ queryKey: ["my-sub", v?.channel_id, me?.id] });
       toast.success(subscribed ? "Unsubscribed" : "Subscribed");
     },
     onError: (e) => toast.error(e.message),

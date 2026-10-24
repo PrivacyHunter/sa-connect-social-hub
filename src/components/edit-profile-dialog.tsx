@@ -34,7 +34,10 @@ export function EditProfileDialog({
   const [busy, setBusy] = useState(false);
 
   async function submit() {
-    if (!displayName.trim() || !username.trim()) return toast.error("Name and username are required");
+    if (!displayName.trim() || !username.trim()) {
+      toast.error("Name and username are required");
+      return;
+    }
     setBusy(true);
     try {
       const patch: Partial<Profile> = {

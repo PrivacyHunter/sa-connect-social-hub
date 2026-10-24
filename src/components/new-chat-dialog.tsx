@@ -92,7 +92,10 @@ export function NewChatDialog({
 
   async function createConversation(type: "group" | "channel") {
     const name = (type === "group" ? groupName : channelName).trim();
-    if (!name) return toast.error("Give it a name");
+    if (!name) {
+      toast.error("Give it a name");
+      return;
+    }
     setBusy(true);
     try {
       const { data: conv, error } = await supabase
