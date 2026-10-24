@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Loader2, Newspaper, Plus, Sparkles } from "lucide-react";

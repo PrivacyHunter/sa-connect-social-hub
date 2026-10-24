@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { MessageCircle, MessagesSquare, Megaphone, Search, Users, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
