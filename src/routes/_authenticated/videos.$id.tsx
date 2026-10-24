@@ -54,17 +54,18 @@ function WatchPage() {
   });
 
   const mySub = useQuery({
-    queryKey: ["my-sub", v?.channel_id, me?.id],
+    queryKey: ["my-sub", video.data?.channel_id, me?.id],
     queryFn: async () => {
+      const channelId = video.data!.channel_id;
       const { count, error } = await supabase
         .from("subscriptions")
         .select("channel_id", { count: "exact", head: true })
         .eq("subscriber_id", me!.id)
-        .eq("channel_id", v!.channel_id);
+        .eq("channel_id", channelId);
       if (error) throw error;
       return (count ?? 0) > 0;
     },
-    enabled: !!me && !!v,
+    enabled: !!me && !!video.data,
   });
 
   const related = useQuery({
