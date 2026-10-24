@@ -117,7 +117,7 @@ export function PostCard({ post, meId }: { post: Post; meId: string }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                variant="destructive"
+                className="text-destructive focus:text-destructive"
                 onClick={() => {
                   if (confirm("Delete this post?")) removePost.mutate();
                 }}

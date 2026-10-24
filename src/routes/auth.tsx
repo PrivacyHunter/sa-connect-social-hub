@@ -9,14 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect:
-      typeof search.redirect === "string" &&
-      search.redirect.startsWith("/") &&
-      !search.redirect.startsWith("//")
-        ? search.redirect
-        : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    const raw = search["redirect"];
+    const redirect =
+      typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
+    return redirect ? { redirect } : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign in — S&A Connect" },
@@ -86,7 +84,10 @@ function AuthPage() {
   }
 
   async function forgot() {
-    if (!email) return toast.error("Enter your email first");
+    if (!email) {
+      toast.error("Enter your email first");
+      return;
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });

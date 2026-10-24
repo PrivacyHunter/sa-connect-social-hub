@@ -202,14 +202,20 @@ function ConversationPage() {
       .delete()
       .eq("conversation_id", id)
       .eq("user_id", me.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["conversations"] });
     navigate({ to: "/chat" });
   }
 
   async function pinLast() {
     const last = messages.data?.[messages.data.length - 1];
-    if (!last) return toast.error("Nothing to pin yet");
+    if (!last) {
+      toast.error("Nothing to pin yet");
+      return;
+    }
     const body =
       last.kind === "text"
         ? last.body
@@ -222,7 +228,10 @@ function ConversationPage() {
       .from("conversations")
       .update({ pinned_body: body, pinned_at: last.created_at })
       .eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["conversation", id] });
     toast.success("Announcement pinned");
   }
@@ -271,7 +280,10 @@ function ConversationPage() {
                 <Pin className="h-4 w-4" /> Pin latest message
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem variant="destructive" onClick={leave}>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={leave}
+            >
               <LogOut className="h-4 w-4" /> Leave
             </DropdownMenuItem>
           </DropdownMenuContent>
