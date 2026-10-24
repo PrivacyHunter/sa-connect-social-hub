@@ -176,7 +176,7 @@ export function NewChatDialog({
                   <span className="block truncate text-sm font-medium">{p.display_name}</span>
                   <span className="block truncate text-xs text-muted-foreground">@{p.username}</span>
                 </span>
-                {tab === "dm" && (
+                {tab === "dm" ? (
                   <MessageHint busy={busy} />
                 ) : (
                   isSelected && <span className="text-sm font-semibold text-gold">✓</span>
