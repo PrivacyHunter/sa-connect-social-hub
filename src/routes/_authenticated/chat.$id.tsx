@@ -344,9 +344,6 @@ function ConversationPage() {
           </p>
         )}
       </form>
-      {isChannel && !canPost && conv.data?.created_by && null}
-      <input type="hidden" value={lastMessage ? "1" : "0"} />
-      {me && conv.data && members.length === 0 && <Plus className="hidden" />}
     </div>
   );
 }
