@@ -7,22 +7,21 @@ const cache = new Map<string, Promise<string>>();
 /** Signed URL for a private-bucket object, cached per path. */
 export function signedUrl(bucket: string, path: string): Promise<string> {
   const key = `${bucket}/${path}`;
-  let entry = cache.get(key);
-  if (!entry) {
-    entry = supabase.storage
-      .from(bucket)
-      .createSignedUrl(path, SIGNED_TTL)
-      .then((r) => {
-        if (r.error) throw r.error;
-        return r.data.signedUrl;
-      })
-      .catch((e) => {
-        cache.delete(key);
-        throw e;
-      });
-    cache.set(key, entry);
-  }
-  return entry;
+  const existing = cache.get(key);
+  if (existing) return existing;
+  const promise = supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_TTL)
+    .then((r) => {
+      if (r.error) throw r.error;
+      return r.data.signedUrl;
+    })
+    .catch((e: unknown) => {
+      cache.delete(key);
+      throw e;
+    });
+  cache.set(key, promise);
+  return promise;
 }
 
 /** Upload a file into the given bucket under the caller's own folder. Returns the storage path. */

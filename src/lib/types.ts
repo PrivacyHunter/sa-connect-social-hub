@@ -114,5 +114,4 @@ export interface Video {
   profiles: Profile;
   video_likes: { user_id: string; value: number }[];
   video_bookmarks: { user_id: string }[];
-  subscriptions: { subscriber_id: string }[];
 }

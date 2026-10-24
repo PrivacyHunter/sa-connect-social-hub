@@ -118,7 +118,9 @@ function ReelItem({ reel, meId, onComments }: { reel: Reel; meId: string; onComm
     const el = wrapRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => {
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
         const v = videoRef.current;
         if (!v) return;
         if (entry.isIntersecting) v.play().catch(() => {});
@@ -162,7 +164,10 @@ function ReelItem({ reel, meId, onComments }: { reel: Reel; meId: string; onComm
   async function removeReel() {
     if (!confirm("Delete this reel?")) return;
     const { error } = await supabase.from("reels").delete().eq("id", reel.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["reels"] });
   }
 

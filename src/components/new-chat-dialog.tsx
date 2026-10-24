@@ -92,7 +92,10 @@ export function NewChatDialog({
 
   async function createConversation(type: "group" | "channel") {
     const name = (type === "group" ? groupName : channelName).trim();
-    if (!name) return toast.error("Give it a name");
+    if (!name) {
+      toast.error("Give it a name");
+      return;
+    }
     setBusy(true);
     try {
       const { data: conv, error } = await supabase
@@ -176,7 +179,7 @@ export function NewChatDialog({
                   <span className="block truncate text-sm font-medium">{p.display_name}</span>
                   <span className="block truncate text-xs text-muted-foreground">@{p.username}</span>
                 </span>
-                {tab === "dm" && (
+                {tab === "dm" ? (
                   <MessageHint busy={busy} />
                 ) : (
                   isSelected && <span className="text-sm font-semibold text-gold">✓</span>

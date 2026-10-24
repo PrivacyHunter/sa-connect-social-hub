@@ -68,7 +68,6 @@ export function PostCard({ post, meId }: { post: Post; meId: string }) {
 
   const removePost = useMutation({
     mutationFn: async () => {
-      await supabase.from("posts").delete().eq("post_id", post.id).eq("author_id", meId);
       await supabase.from("posts").delete().eq("id", post.id);
     },
     onSuccess: invalidate,
@@ -117,7 +116,7 @@ export function PostCard({ post, meId }: { post: Post; meId: string }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                variant="destructive"
+                className="text-destructive focus:text-destructive"
                 onClick={() => {
                   if (confirm("Delete this post?")) removePost.mutate();
                 }}
