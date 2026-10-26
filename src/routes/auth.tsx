@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { isDisposableEmail, passwordProblems } from "@/lib/signup-rules";
 import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
