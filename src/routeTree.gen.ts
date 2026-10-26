@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedIncomeRouteImport } from './routes/_authenticated/income'
 import { Route as AuthenticatedMarketplaceRouteImport } from './routes/_authenticated/marketplace'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
@@ -51,6 +52,11 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
 const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIncomeRoute = AuthenticatedIncomeRouteImport.update({
+  id: '/income',
+  path: '/income',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMarketplaceRoute =
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/income': typeof AuthenticatedIncomeRoute
   '/marketplace': typeof AuthenticatedMarketplaceRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/reels': typeof AuthenticatedReelsRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/income': typeof AuthenticatedIncomeRoute
   '/marketplace': typeof AuthenticatedMarketplaceRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/reels': typeof AuthenticatedReelsRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/income': typeof AuthenticatedIncomeRoute
   '/_authenticated/marketplace': typeof AuthenticatedMarketplaceRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/contacts'
     | '/feed'
+    | '/income'
     | '/marketplace'
     | '/panel'
     | '/reels'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/contacts'
     | '/feed'
+    | '/income'
     | '/marketplace'
     | '/panel'
     | '/reels'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/contacts'
     | '/_authenticated/feed'
+    | '/_authenticated/income'
     | '/_authenticated/marketplace'
     | '/_authenticated/panel'
     | '/_authenticated/reels'
@@ -242,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/income': {
+      id: '/_authenticated/income'
+      path: '/income'
+      fullPath: '/income'
+      preLoaderRoute: typeof AuthenticatedIncomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/marketplace': {
@@ -306,6 +325,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedIncomeRoute: typeof AuthenticatedIncomeRoute
   AuthenticatedMarketplaceRoute: typeof AuthenticatedMarketplaceRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
@@ -319,6 +339,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedIncomeRoute: AuthenticatedIncomeRoute,
   AuthenticatedMarketplaceRoute: AuthenticatedMarketplaceRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,

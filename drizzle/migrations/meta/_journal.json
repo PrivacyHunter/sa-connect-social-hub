@@ -8,6 +8,13 @@
       "when": 1793007114509,
       "tag": "0000_platform_management_marketplace_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793011376204,
+      "tag": "0001_privacy_tightening_and_levels",
+      "breakpoints": true
     }
   ]
 }

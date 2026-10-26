@@ -13,7 +13,10 @@ import {
   Users,
   ShoppingBag,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { IncomePopup, Marquee, SiteFooter } from "@/components/site-chrome";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile } from "@/hooks/use-current-user";
 import { OnlineProvider } from "@/lib/presence";
@@ -31,7 +34,7 @@ const NAV = [
   { to: "/videos", label: "Videos", icon: MonitorPlay },
   { to: "/contacts", label: "Contacts", icon: Users },
   { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
-  { to: "/panel", label: "Panel", icon: ShieldCheck },
+  { to: "/income", label: "Income", icon: Wallet },
 ] as const;
 
 export function AppShell() {
@@ -49,6 +52,14 @@ function Shell({ me }: { me: Profile | null | undefined }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const staff = useQuery({
+    queryKey: ["my-role", me?.id],
+    enabled: !!me,
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", me!.id).maybeSingle();
+      return !!data;
+    },
+  });
   const profileTo = me ? `/profile/${me.username}` : "/feed";
 
   async function handleSignOut() {
@@ -92,6 +103,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {NAV.map((item) => navItem(item, collapsed))}
+          {staff.data && navItem({ to: "/panel", label: "Panel", icon: ShieldCheck } as unknown as (typeof NAV)[number], collapsed)}
           <Link
             to={profileTo}
             className={cn(
@@ -162,8 +174,11 @@ function Shell({ me }: { me: Profile | null | undefined }) {
 
       {/* Content */}
       <main className={cn("min-h-screen pb-20 lg:pb-0", collapsed ? "lg:pl-[76px]" : "lg:pl-64")}>
+        <Marquee />
         <Outlet />
+        <SiteFooter />
       </main>
+      <IncomePopup />
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 items-center border-t border-glass-border glass pb-[env(safe-area-inset-bottom)] lg:hidden">

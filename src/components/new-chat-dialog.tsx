@@ -38,12 +38,15 @@ export function NewChatDialog({
   const results = useQuery({
     queryKey: ["profile-search", search],
     queryFn: async (): Promise<Profile[]> => {
+      // Only your connections are listed; anyone else must be found by exact username.
       let q = supabase.from("profiles").select("*").neq("id", meId).limit(12);
-      const s = search.trim();
+      const s = search.trim().replace(/^@/, "").replace(/[^a-zA-Z0-9_]/g, "");
       if (s) q = q.or(`username.ilike.%${s}%,display_name.ilike.%${s}%`);
-      const { data, error } = await q;
+      const [{ data, error }, exact] = await Promise.all([q, s ? supabase.rpc("find_user_by_username", { p_username: s }) : Promise.resolve({ data: [] as Profile[] })]);
       if (error) throw error;
-      return data as Profile[];
+      const list = (data ?? []) as Profile[];
+      for (const p of (exact.data ?? []) as Profile[]) if (p.id !== meId && !list.some((x) => x.id === p.id)) list.unshift(p);
+      return list;
     },
     enabled: open,
   });
