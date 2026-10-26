@@ -23,10 +23,11 @@ export const Route = createFileRoute("/_authenticated/chat/")({
   head: () => ({
     meta: [
       { title: "Chat — S&A Connect" },
-      {
-        name: "description",
-        content: "Direct messages, groups and broadcast channels in S&A Connect.",
-      },
+      { name: "description", content: "Direct messages, groups and broadcast channels in S&A Connect." },
+      { property: "og:title", content: "Chat — S&A Connect" },
+      { property: "og:description", content: "Direct messages, groups and broadcast channels in S&A Connect." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ChatListPage,

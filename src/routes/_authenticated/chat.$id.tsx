@@ -37,7 +37,14 @@ import { UserAvatar } from "@/components/user-avatar";
 
 export const Route = createFileRoute("/_authenticated/chat/$id")({
   head: () => ({
-    meta: [{ title: "Conversation — S&A Connect" }],
+    meta: [
+      { title: "Conversation — S&A Connect" },
+      { name: "description", content: "Your messages and shared moments on S&A Connect." },
+      { property: "og:title", content: "Conversation — S&A Connect" },
+      { property: "og:description", content: "Your messages and shared moments on S&A Connect." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
   }),
   component: ConversationPage,
 });

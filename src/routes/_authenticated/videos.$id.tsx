@@ -26,7 +26,14 @@ import { UserAvatar } from "@/components/user-avatar";
 
 export const Route = createFileRoute("/_authenticated/videos/$id")({
   head: () => ({
-    meta: [{ title: "Watch — S&A Connect" }],
+    meta: [
+      { title: "Watch — S&A Connect" },
+      { name: "description", content: "Watch community videos and connect with creators on S&A Connect." },
+      { property: "og:title", content: "Watch — S&A Connect" },
+      { property: "og:description", content: "Watch community videos and connect with creators on S&A Connect." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
   }),
   component: WatchPage,
 });

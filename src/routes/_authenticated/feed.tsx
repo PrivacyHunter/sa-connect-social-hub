@@ -29,6 +29,10 @@ export const Route = createFileRoute("/_authenticated/feed")({
     meta: [
       { title: "Feed — S&A Connect" },
       { name: "description", content: "Stories, posts and conversations from the people you follow." },
+      { property: "og:title", content: "Feed — S&A Connect" },
+      { property: "og:description", content: "Stories, posts and conversations from the people you follow." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: FeedPage,

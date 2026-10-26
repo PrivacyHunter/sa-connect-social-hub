@@ -36,6 +36,10 @@ export const Route = createFileRoute("/_authenticated/reels")({
     meta: [
       { title: "Reels — S&A Connect" },
       { name: "description", content: "Short vertical videos from the S&A Connect community." },
+      { property: "og:title", content: "Reels — S&A Connect" },
+      { property: "og:description", content: "Short vertical videos from the S&A Connect community." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ReelsPage,
