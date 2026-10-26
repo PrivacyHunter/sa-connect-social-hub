@@ -10,6 +10,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   User,
+  Users,
+  ShoppingBag,
+  ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile } from "@/hooks/use-current-user";
@@ -26,6 +29,9 @@ const NAV = [
   { to: "/feed", label: "Feed", icon: Newspaper },
   { to: "/reels", label: "Reels", icon: Clapperboard },
   { to: "/videos", label: "Videos", icon: MonitorPlay },
+  { to: "/contacts", label: "Contacts", icon: Users },
+  { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+  { to: "/panel", label: "Panel", icon: ShieldCheck },
 ] as const;
 
 export function AppShell() {
@@ -143,6 +149,8 @@ function Shell({ me }: { me: Profile | null | undefined }) {
           <Brand />
         </Link>
         <div className="flex items-center gap-1">
+          <Link to="/contacts" aria-label="Contacts" className="p-2"><Users className="h-5 w-5" /></Link>
+          <Link to="/marketplace" aria-label="Marketplace" className="p-2"><ShoppingBag className="h-5 w-5" /></Link>
           <ThemeToggle />
           {me && (
             <Link to={profileTo} aria-label="Your profile">
@@ -171,7 +179,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </Link>
-        {NAV.slice(2).map((item) => (
+        {NAV.slice(2,4).map((item) => (
           <BottomItem key={item.to} item={item} pathname={pathname} />
         ))}
       </nav>
