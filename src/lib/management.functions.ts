@@ -66,6 +66,6 @@ export const manageAccount = createServerFn({ method: "POST" }).middleware([requ
       const authResult = await admin.auth.admin.updateUserById(target, { ban_duration: ["suspended","banned","deleted"].includes(data.action) ? "876000h" : "none" }); if (authResult.error) throw authResult.error;
     }
   }
-  const audit = await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: target, action: data.action === "role" ? `role:${data.role}` : data.action }); if (audit.error) throw audit.error;
+  const audit = await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: target ?? null, action: data.action === "role" ? `role:${data.role}` : data.action }); if (audit.error) throw audit.error;
   return { ok: true };
 });
