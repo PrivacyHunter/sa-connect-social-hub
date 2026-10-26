@@ -840,6 +840,25 @@ export type Database = {
     Functions: {
       account_can_read: { Args: never; Returns: boolean }
       account_can_write: { Args: never; Returns: boolean }
+      can_view_profile: { Args: { p: string }; Returns: boolean }
+      find_user_by_username: {
+        Args: { p_username: string }
+        Returns: {
+          avatar_url: string | null
+          banner_url: string | null
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       increment_video_views: {
         Args: { p_video_id: string }
         Returns: undefined
@@ -848,6 +867,7 @@ export type Database = {
         Args: { p_conversation: string; p_user: string }
         Returns: boolean
       }
+      is_staff: { Args: { p: string }; Returns: boolean }
       match_contacts: {
         Args: { emails: string[] }
         Returns: {
@@ -855,6 +875,18 @@ export type Database = {
           id: string
           matched_email: string
           username: string
+        }[]
+      }
+      profile_stats: {
+        Args: { p: string }
+        Returns: {
+          comments: number
+          days: number
+          followers: number
+          following: number
+          posts: number
+          reels: number
+          videos: number
         }[]
       }
     }
