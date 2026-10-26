@@ -18,6 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile } from "@/hooks/use-current-user";
 import { formatCount, parseHashtags, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { Award } from "lucide-react";
+import { badgeName, experience, levelFromXp, xpForLevel } from "@/lib/levels";
 import type { Post, Profile, Reel, Video } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,11 +54,7 @@ function ProfilePage() {
   const profile = useQuery({
     queryKey: ["profile", username],
     queryFn: async (): Promise<Profile> => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("username", username)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("find_user_by_username", { p_username: username }).maybeSingle();
       if (error) throw error;
       if (!data) throw new Error(`No user @${username}`);
       return data as Profile;
@@ -69,13 +67,12 @@ function ProfilePage() {
   const stats = useQuery({
     queryKey: ["profile-stats", pid],
     queryFn: async () => {
-      if (!pid) return { posts: 0, followers: 0, following: 0 };
-      const [p, f, g] = await Promise.all([
-        supabase.from("posts").select("id", { count: "exact", head: true }).eq("author_id", pid),
-        supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", pid),
-        supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("follower_id", pid),
-      ]);
-      return { posts: p.count ?? 0, followers: f.count ?? 0, following: g.count ?? 0 };
+      const { data, error } = await supabase.rpc("profile_stats", { p: pid! }).maybeSingle();
+      if (error) throw error;
+      const n = (v: unknown) => Number(v ?? 0);
+      const s = { posts: n(data?.posts), reels: n(data?.reels), videos: n(data?.videos), comments: n(data?.comments), followers: n(data?.followers), following: n(data?.following), days: n(data?.days) };
+      const level = levelFromXp(experience(s));
+      return { ...s, level, badge: badgeName(level), xp: experience(s), next: level < 1000 ? xpForLevel(level + 1) : null };
     },
     enabled: !!pid,
   });
@@ -170,6 +167,12 @@ function ProfilePage() {
         </div>
       </div>
 
+      {stats.data && (
+        <div className="mx-4 mt-3 flex flex-wrap items-center gap-3">
+          <span className="level-badge"><Award className="h-4 w-4" /> Lv {stats.data.level} · {stats.data.badge}</span>
+          <span className="text-xs text-muted-foreground">{stats.data.xp} XP{stats.data.next !== null && ` / ${stats.data.next} for next level`}</span>
+        </div>
+      )}
       {p.bio && <p className="mt-3 whitespace-pre-wrap px-4 text-sm">{p.bio}</p>}
 
       <div className="mt-4 flex gap-6 px-4 text-sm">
