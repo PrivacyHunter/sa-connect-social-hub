@@ -840,6 +840,7 @@ export type Database = {
     Functions: {
       account_can_read: { Args: never; Returns: boolean }
       account_can_write: { Args: never; Returns: boolean }
+      can_read_author_thread: { Args: { p_author: string }; Returns: boolean }
       can_view_profile: { Args: { p: string }; Returns: boolean }
       find_user_by_username: {
         Args: { p_username: string }
