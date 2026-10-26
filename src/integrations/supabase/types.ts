@@ -343,6 +343,44 @@ export type Database = {
           },
         ]
       }
+      phone_verifications: {
+        Row: {
+          attempts: number
+          code_hash: string | null
+          expires_at: string | null
+          phone: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash?: string | null
+          expires_at?: string | null
+          phone: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string | null
+          expires_at?: string | null
+          phone?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_bookmarks: {
         Row: {
           created_at: string
@@ -604,6 +642,36 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          facebook_url: string
+          id: boolean
+          instagram_url: string
+          marquee: string[]
+          updated_at: string
+          x_url: string
+          youtube_url: string
+        }
+        Insert: {
+          facebook_url?: string
+          id?: boolean
+          instagram_url?: string
+          marquee?: string[]
+          updated_at?: string
+          x_url?: string
+          youtube_url?: string
+        }
+        Update: {
+          facebook_url?: string
+          id?: boolean
+          instagram_url?: string
+          marquee?: string[]
+          updated_at?: string
+          x_url?: string
+          youtube_url?: string
+        }
+        Relationships: []
+      }
       stories: {
         Row: {
           author_id: string
@@ -840,6 +908,7 @@ export type Database = {
     Functions: {
       account_can_read: { Args: never; Returns: boolean }
       account_can_write: { Args: never; Returns: boolean }
+      can_download_from: { Args: { p_owner: string }; Returns: boolean }
       can_read_author_thread: { Args: { p_author: string }; Returns: boolean }
       can_view_profile: { Args: { p: string }; Returns: boolean }
       find_user_by_username: {
