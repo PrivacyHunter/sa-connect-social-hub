@@ -28,7 +28,14 @@ import { EmptyState } from "@/components/empty-state";
 
 export const Route = createFileRoute("/_authenticated/profile/$username")({
   head: () => ({
-    meta: [{ title: "Profile — S&A Connect" }],
+    meta: [
+      { title: "Profile — S&A Connect" },
+      { name: "description", content: "Creator profiles, posts, reels and videos on S&A Connect." },
+      { property: "og:title", content: "Profile — S&A Connect" },
+      { property: "og:description", content: "Creator profiles, posts, reels and videos on S&A Connect." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
   }),
   component: ProfilePage,
 });

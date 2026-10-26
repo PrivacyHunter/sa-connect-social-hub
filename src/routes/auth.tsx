@@ -1,12 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
-import { Loader2, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
+import scene from "@/assets/brand-scene.asset.json";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
@@ -19,18 +22,25 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Sign in — S&A Connect" },
       { name: "description", content: "Sign in or create your S&A Connect account." },
+      { property: "og:title", content: "Sign in — S&A Connect" },
+      { property: "og:description", content: "Join S&A Connect with Google or email." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: scene.url },
+      { name: "twitter:image", content: scene.url },
     ],
   }),
   component: AuthPage,
 });
 
-function AuthPage() {
+export function AuthPage() {
   const navigate = useNavigate();
-  const search = Route.useSearch();
+  const search = useSearch({ strict: false });
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -75,12 +85,17 @@ function AuthPage() {
     }
   }
 
-  async function social(provider: "google" | "lovable") {
-    const result = await lovable.auth.signInWithOAuth(provider, {
+  async function social() {
+    setBusy(true);
+    try {
+    const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
     if (result.error) toast.error(result.error.message);
     if (!result.redirected && !result.error) navigate({ to: after, replace: true });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Google sign-in failed");
+    } finally { setBusy(false); }
   }
 
   async function forgot() {
@@ -96,22 +111,20 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center p-4">
-      <div className="glass w-full max-w-md rounded-3xl p-7 shadow-[var(--shadow-glow)]">
-        <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-gold-deep font-display text-sm font-bold text-primary-foreground">
-            S&A
-          </span>
-          <div>
-            <h1 className="font-display text-xl font-bold">
-              S&A <span className="text-gradient-brand">Connect</span>
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {mode === "signin" ? "Welcome back — sign in to continue" : "Create your account"}
-            </p>
-          </div>
+    <div className="auth-stage">
+      <img src={scene.url} alt="" className="auth-backdrop" aria-hidden="true" />
+      <header className="auth-header"><Brand /><ThemeToggle /></header>
+      <main className="auth-main">
+      <section className="auth-panel">
+        <div className="auth-panel-heading">
+          <span className="auth-eyebrow"><span /> YOUR WORLD. CONNECTED.</span>
+          <h1 className="font-display text-3xl font-bold">{mode === "signin" ? "Welcome back." : "Make your connection."}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{mode === "signin" ? "Your people. Your moments. Your space." : "A new chapter starts with you."}</p>
         </div>
-
+        <div className="auth-tabs">
+          <Button variant="ghost" className={mode === "signin" ? "auth-tab-active" : ""} onClick={() => { setMode("signin"); setNotice(null); }}>Sign in</Button>
+          <Button variant="ghost" className={mode === "signup" ? "auth-tab-active" : ""} onClick={() => { setMode("signup"); setNotice(null); }}>Create account</Button>
+        </div>
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" && (
             <div className="space-y-1.5">
@@ -139,28 +152,29 @@ function AuthPage() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="auth-pass">Password</Label>
-            <Input
+            <div className="relative"><Input
               id="auth-pass"
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            />
+              className="pr-12"
+            /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div>
           </div>
           <Button type="submit" disabled={busy} className="w-full">
             {busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            <Mail className="mr-1 h-4 w-4" />
+            <ArrowRight className="mr-1 h-4 w-4" />
             {mode === "signin" ? "Sign in" : "Create account"}
           </Button>
         </form>
 
         {mode === "signin" && (
-          <button onClick={forgot} className="mt-2 text-xs text-muted-foreground hover:text-gold hover:underline">
+          <Button variant="link" onClick={forgot} className="mt-2 h-auto p-0 text-xs text-muted-foreground">
             Forgot password?
-          </button>
+          </Button>
         )}
 
         {notice && (
@@ -171,39 +185,22 @@ function AuthPage() {
           <span className="h-px flex-1 bg-border" /> or continue with <span className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={() => social("google")}>
+        <div>
+          <Button variant="secondary" className="w-full" disabled={busy} onClick={social}>
             <svg viewBox="0 0 24 24" className="mr-1.5 h-4 w-4">
               <path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.2H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l-.02.15 3.5 2.7.24.03c2.2-2.05 3.5-5.05 3.5-8.58z" />
               <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.8-2.9c-1 .7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5l-.14.01-3.6 2.8-.05.13C3.3 21.3 7.3 24 12 24z" />
               <path fill="#FBBC05" d="M5.2 14.4c-.2-.7-.4-1.5-.4-2.4s.1-1.7.4-2.4l-.01-.16-3.7-2.8-.12.06C.4 8.3 0 10.1 0 12s.4 3.7 1.4 5.3l3.8-2.9z" />
               <path fill="#EA4335" d="M12 4.6c2.2 0 3.7 1 4.6 1.8l3.3-3.2C17.9 1.2 15.2 0 12 0 7.3 0 3.3 2.7 1.4 6.7l3.8 2.9c1-2.9 3.7-5 6.8-5z" />
             </svg>
-            Google
-          </Button>
-          <Button variant="secondary" onClick={() => social("lovable")}>
-            Continue with Lovable
+            Continue with Google
           </Button>
         </div>
 
-        <p className="mt-5 text-center text-sm text-muted-foreground">
-          {mode === "signin" ? "New to S&A Connect?" : "Already have an account?"}{" "}
-          <button
-            onClick={() => {
-              setMode(mode === "signin" ? "signup" : "signin");
-              setNotice(null);
-            }}
-            className="font-semibold text-gold hover:underline"
-          >
-            {mode === "signin" ? "Create an account" : "Sign in"}
-          </button>
-        </p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          <Link to="/" className="hover:underline">
-            ← Back to home
-          </Link>
-        </p>
-      </div>
+        <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Your connection, kept private.</p>
+      </section>
+      </main>
+      <footer className="auth-footer"><span>© S&A Connect</span><span>CHAT · SHARE · WATCH · CONNECT</span></footer>
     </div>
   );
 }

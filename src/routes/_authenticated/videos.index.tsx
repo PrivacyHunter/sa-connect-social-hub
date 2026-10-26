@@ -16,6 +16,10 @@ export const Route = createFileRoute("/_authenticated/videos/")({
     meta: [
       { title: "Video Hub — S&A Connect" },
       { name: "description", content: "Long-form videos, creators and channels on S&A Connect." },
+      { property: "og:title", content: "Video Hub — S&A Connect" },
+      { property: "og:description", content: "Long-form videos, creators and channels on S&A Connect." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: VideoHubPage,
