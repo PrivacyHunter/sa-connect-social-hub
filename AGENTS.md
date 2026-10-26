@@ -17,3 +17,6 @@
 - Marketplace listings use authenticated owner-scoped writes and the existing private media bucket; all rows come from users.
 - Profile visibility goes through can_view_profile (self, staff, connections, content creators); strangers are found only by exact username via find_user_by_username, so the full member list is never browsable.
 - Levels/badges are derived from activity counts (profile_stats + src/lib/levels.ts), not stored, so they cannot be edited by users.
+- File downloads go through can_download_from (owner, followers, chat partners, staff); site-wide marquee and social links live in the single-row site_settings table, edited only via developer/owner server functions.
+- Staff reading user chats goes through moderation server functions restricted to developer/owner and every read is written to admin_audit.
+- Phone verification uses an app-owned OTP (hashed code, 10 min expiry, 5 attempts, 60s resend) sent via the Twilio connector, not Supabase phone auth.

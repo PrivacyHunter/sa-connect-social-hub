@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 const options = queryOptions({ queryKey: ["marketplace"], queryFn: async () => { const [result, user] = await Promise.all([supabase.from("marketplace_listings").select("*,profiles!marketplace_listings_seller_id_fkey(username,display_name)").order("created_at", { ascending: false }), supabase.auth.getUser()]); if (result.error) throw result.error; return { listings: result.data, userId: user.data.user?.id }; } });
-export const Route = createFileRoute("/_authenticated/marketplace")({ loader: ({ context }) => context.queryClient.ensureQueryData(options), head: () => pageHead("Marketplace", "Buy and sell with the S&A Connect community."), component: Marketplace });
+export const Route = createFileRoute("/_authenticated/marketplace")({ loader: ({ context }) => context.queryClient.ensureQueryData(options), head: () => pageHead("Marketplace", "Buy and sell with the SA Connect community."), component: Marketplace });
 const categories = ["All", "Electronics", "Fashion", "Home", "Vehicles", "Other"];
 const schema = z.object({ title: z.string().trim().min(1).max(120), description: z.string().max(5000), price: z.coerce.number().min(0).max(9999999999), location: z.string().max(150), currency: z.enum(["PKR","USD"]), category: z.enum(["Electronics","Fashion","Home","Vehicles","Other"]) });
 function Marketplace() {

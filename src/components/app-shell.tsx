@@ -173,9 +173,9 @@ function Shell({ me }: { me: Profile | null | undefined }) {
       </header>
 
       {/* Content */}
-      <main className={cn("min-h-screen pb-20 lg:pb-0", collapsed ? "lg:pl-[76px]" : "lg:pl-64")}>
+      <main className={cn("flex min-h-screen flex-col pb-20 lg:pb-0", collapsed ? "lg:pl-[76px]" : "lg:pl-64")}>
         <Marquee />
-        <Outlet />
+        <div className="flex-1"><Outlet /></div>
         <SiteFooter />
       </main>
       <IncomePopup />

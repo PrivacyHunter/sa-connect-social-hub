@@ -22,10 +22,10 @@ const TABS = [
 export const Route = createFileRoute("/_authenticated/chat/")({
   head: () => ({
     meta: [
-      { title: "Chat — S&A Connect" },
-      { name: "description", content: "Direct messages, groups and broadcast channels in S&A Connect." },
-      { property: "og:title", content: "Chat — S&A Connect" },
-      { property: "og:description", content: "Direct messages, groups and broadcast channels in S&A Connect." },
+      { title: "Chat — SA Connect" },
+      { name: "description", content: "Direct messages, groups and broadcast channels in SA Connect." },
+      { property: "og:title", content: "Chat — SA Connect" },
+      { property: "og:description", content: "Direct messages, groups and broadcast channels in SA Connect." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

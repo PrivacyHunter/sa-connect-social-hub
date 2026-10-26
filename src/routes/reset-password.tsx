@@ -10,10 +10,10 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password — S&A Connect" },
-      { name: "description", content: "Recover access to your S&A Connect account." },
-      { property: "og:title", content: "Reset password — S&A Connect" },
-      { property: "og:description", content: "Recover access to your S&A Connect account." },
+      { title: "Reset password — SA Connect" },
+      { name: "description", content: "Recover access to your SA Connect account." },
+      { property: "og:title", content: "Reset password — SA Connect" },
+      { property: "og:description", content: "Recover access to your SA Connect account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

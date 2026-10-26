@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useServerFn } from "@tanstack/react-start";
+import { sendPhoneCode, verifyPhoneCode } from "@/lib/phone.functions";
 
 export function VerificationCard() {
   const [email, setEmail] = useState<{ address: string; verified: boolean } | null>(null);
@@ -12,14 +14,17 @@ export function VerificationCard() {
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const send = useServerFn(sendPhoneCode);
+  const check = useServerFn(verifyPhoneCode);
 
   async function load() {
     const { data } = await supabase.auth.getUser();
     const u = data.user;
     if (!u) return;
     setEmail({ address: u.email ?? "", verified: !!u.email_confirmed_at });
-    setPhoneVerified(!!u.phone_confirmed_at);
-    if (u.phone) setPhone(`+${u.phone}`);
+    const { data: pv } = await supabase.from("phone_verifications").select("phone,verified_at").eq("user_id", u.id).maybeSingle();
+    setPhoneVerified(!!pv?.verified_at);
+    if (pv?.phone) setPhone(pv.phone);
   }
   useEffect(() => { load(); }, []);
 
@@ -33,17 +38,15 @@ export function VerificationCard() {
   async function sendCode() {
     if (!/^\+\d{8,15}$/.test(phone)) { toast.error("Enter number with country code, e.g. +923001234567"); return; }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ phone });
-    setBusy(false);
-    if (error) { toast.error("Phone verification is not active yet. SMS service needs to be connected."); return; }
-    setSent(true); toast.success("Code sent by SMS");
+    try { await send({ data: { phone } }); setSent(true); toast.success("Code sent by SMS"); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Could not send code"); }
+    finally { setBusy(false); }
   }
   async function verify() {
     setBusy(true);
-    const { error } = await supabase.auth.verifyOtp({ phone, token: code, type: "phone_change" });
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Phone verified"); setSent(false); load();
+    try { await check({ data: { code } }); toast.success("Phone verified"); setSent(false); load(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Wrong code"); }
+    finally { setBusy(false); }
   }
 
   if (!email) return null;

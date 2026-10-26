@@ -14,10 +14,10 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/_authenticated/videos/")({
   head: () => ({
     meta: [
-      { title: "Video Hub — S&A Connect" },
-      { name: "description", content: "Long-form videos, creators and channels on S&A Connect." },
-      { property: "og:title", content: "Video Hub — S&A Connect" },
-      { property: "og:description", content: "Long-form videos, creators and channels on S&A Connect." },
+      { title: "Video Hub — SA Connect" },
+      { name: "description", content: "Long-form videos, creators and channels on SA Connect." },
+      { property: "og:title", content: "Video Hub — SA Connect" },
+      { property: "og:description", content: "Long-form videos, creators and channels on SA Connect." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
