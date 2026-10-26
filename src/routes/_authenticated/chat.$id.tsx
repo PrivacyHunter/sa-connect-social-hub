@@ -34,6 +34,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user-avatar";
+import { CallOverlay, useCall } from "@/components/call-overlay";
+import { Phone, Video } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/chat/$id")({
   head: () => ({
@@ -61,6 +63,7 @@ function ConversationPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordStartRef = useRef(0);
+  const call = useCall(id, me?.id);
 
   const conv = useQuery({
     queryKey: ["conversation", id],
@@ -275,6 +278,13 @@ function ConversationPage() {
               : `${members.length} ${members.length === 1 ? "member" : "members"}${isChannel ? " · broadcast channel" : " · group"}`}
           </p>
         </div>
+        <Button variant="ghost" size="icon" aria-label="Voice call" onClick={() => call.start(false)}>
+          <Phone className="h-5 w-5" />
+        </Button>
+        <Button variant="ghost" size="icon" aria-label="Video call" onClick={() => call.start(true)}>
+          <Video className="h-5 w-5" />
+        </Button>
+        <CallOverlay call={call} title={title ?? "Call"} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Options">
