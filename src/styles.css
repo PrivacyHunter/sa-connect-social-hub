@@ -184,8 +184,8 @@
   --shadow-panel: 0 30px 80px oklch(0 0 0 / 48%), 0 0 32px oklch(0.85 0.15 195 / 9%);
   --stage-overlay: linear-gradient(90deg, transparent 15%, oklch(0.10 0.008 260 / 20%) 48%, oklch(0.10 0.008 260 / 88%) 75%);
 }
-.brand-logo { width: 180px; height: 66px; object-fit: contain; border-radius: 4px; }
-.brand-mark { width: 44px; height: 34px; object-fit: contain; border-radius: 4px; }
+.brand-logo { width: 150px; height: auto; object-fit: contain; filter: drop-shadow(0 0 10px color-mix(in oklab, var(--primary) 45%, transparent)); }
+.brand-mark { width: 44px; height: auto; object-fit: contain; filter: drop-shadow(0 0 8px color-mix(in oklab, var(--primary) 45%, transparent)); }
 .auth-stage { position: relative; isolation: isolate; min-height: 100dvh; background: var(--stage-background); overflow: hidden; }
 .auth-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 32% center; z-index: -2; }
 .auth-stage::before { content: ""; position: absolute; inset: 0; background: var(--stage-overlay); z-index: -1; }
@@ -207,7 +207,7 @@
   .auth-backdrop { height: 390px; object-position: center top; object-fit: cover; }
   .auth-stage::before { background: linear-gradient(180deg, transparent, var(--stage-background) 380px); }
   .auth-header { padding: 14px 20px; }
-  .auth-header .brand-logo { width: 135px; height: 48px; }
+  .auth-header .brand-logo { width: 120px; height: auto; }
   .auth-main { min-height: calc(100dvh - 144px); justify-content: center; padding: 170px 20px 40px; }
   .auth-panel { padding: 26px; }
   .auth-footer { gap: 20px; }
@@ -237,3 +237,11 @@ body {
 .call-controls { position: absolute; bottom: 40px; display: flex; gap: 16px; }
 .call-btn { width: 56px; height: 56px; border-radius: 50%; }
 .call-btn svg { width: 22px; height: 22px; }
+
+/* Level badge, marquee, footer */
+.level-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 700; color: var(--primary-foreground); background: linear-gradient(90deg, var(--primary), var(--accent)); box-shadow: 0 0 14px color-mix(in oklab, var(--primary) 45%, transparent); }
+.marquee { overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.marquee-track { display: inline-flex; gap: 3rem; padding: .5rem 0; animation: marquee 32s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
