@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_controls: {
+        Row: {
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_controls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           author_id: string
@@ -49,6 +99,29 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_discovery: {
+        Row: {
+          enabled: boolean
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          user_id: string
+        }
+        Update: {
+          enabled?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_discovery_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -163,6 +236,56 @@ export type Database = {
           {
             foreignKeyName: "follows_following_id_fkey"
             columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_listings: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string
+          description: string
+          id: string
+          image_path: string | null
+          location: string
+          price: number
+          seller_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          currency?: string
+          description?: string
+          id?: string
+          image_path?: string | null
+          location?: string
+          price: number
+          seller_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          id?: string
+          image_path?: string | null
+          location?: string
+          price?: number
+          seller_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_listings_seller_id_fkey"
+            columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -582,6 +705,21 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_bookmarks: {
         Row: {
           created_at: string
@@ -700,6 +838,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_can_read: { Args: never; Returns: boolean }
+      account_can_write: { Args: never; Returns: boolean }
       increment_video_views: {
         Args: { p_video_id: string }
         Returns: undefined
@@ -707,6 +847,15 @@ export type Database = {
       is_conversation_member: {
         Args: { p_conversation: string; p_user: string }
         Returns: boolean
+      }
+      match_contacts: {
+        Args: { emails: string[] }
+        Returns: {
+          display_name: string
+          id: string
+          matched_email: string
+          username: string
+        }[]
       }
     }
     Enums: {
