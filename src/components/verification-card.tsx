@@ -31,18 +31,18 @@ export function VerificationCard() {
     error ? toast.error(error.message) : toast.success("Verification email sent");
   }
   async function sendCode() {
-    if (!/^\+\d{8,15}$/.test(phone)) return toast.error("Enter number with country code, e.g. +923001234567");
+    if (!/^\+\d{8,15}$/.test(phone)) { toast.error("Enter number with country code, e.g. +923001234567"); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ phone });
     setBusy(false);
-    if (error) return toast.error("Phone verification is not active yet. SMS service needs to be connected.");
+    if (error) { toast.error("Phone verification is not active yet. SMS service needs to be connected."); return; }
     setSent(true); toast.success("Code sent by SMS");
   }
   async function verify() {
     setBusy(true);
     const { error } = await supabase.auth.verifyOtp({ phone, token: code, type: "phone_change" });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Phone verified"); setSent(false); load();
   }
 

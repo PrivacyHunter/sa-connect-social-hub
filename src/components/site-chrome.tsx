@@ -65,6 +65,7 @@ export function IncomePopup() {
       const t = setTimeout(() => setShow(true), 2500);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, []);
   if (!show) return null;
   const close = () => { sessionStorage.setItem("income-popup", "1"); setShow(false); };
