@@ -11,3 +11,7 @@
 
 - Share the uploaded brand asset through the Brand component and semantic global theme tokens so identity remains consistent.
 - The public home and auth pages share AuthPage; keep account entry behavior in one place to prevent divergent login flows.
+- Privileged panel operations use authenticated server functions that validate caller and target roles before dynamically loading the admin client, so UI controls never authorize access.
+- Contact discovery matches only verified, opted-in emails; do not store uploaded address books or reveal non-opted-in identities.
+- Account restrictions are enforced through restrictive database and storage policies; frozen accounts are read-only and deactivated accounts retain recoverable records.
+- Marketplace listings use authenticated owner-scoped writes and the existing private media bucket; all rows come from users.
