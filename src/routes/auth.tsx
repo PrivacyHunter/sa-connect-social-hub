@@ -63,6 +63,9 @@ export function AuthPage() {
         if (error) throw error;
         navigate({ to: after, replace: true });
       } else {
+        if (isDisposableEmail(email)) throw new Error("Temporary or disposable email addresses are not allowed. Use your real email.");
+        const problems = passwordProblems(password);
+        if (problems.length) throw new Error("Password needs " + problems.join(", ") + ".");
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
