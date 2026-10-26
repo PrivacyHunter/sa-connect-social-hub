@@ -10,7 +10,7 @@ async function sha(text: string) {
 }
 
 async function twilio(path: string, init?: RequestInit) {
-  const key = process.env.LOVABLE_API_KEY, tw = process.env.TWILIO_API_KEY;
+  const key = process.env["LOVABLE_API_KEY"], tw = process.env["TWILIO_API_KEY"];
   if (!key || !tw) throw new Error("SMS service is not connected yet");
   const res = await fetch(`${GATEWAY_URL}${path}`, { ...init, headers: { Authorization: `Bearer ${key}`, "X-Connection-Api-Key": tw, ...(init?.headers ?? {}) } });
   const body = await res.text();
@@ -22,7 +22,7 @@ export const sendPhoneCode = createServerFn({ method: "POST" }).middleware([requ
   const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
   const prev = await admin.from("phone_verifications").select("updated_at").eq("user_id", context.userId).maybeSingle();
   if (prev.data && Date.now() - new Date(prev.data.updated_at).getTime() < 60_000) throw new Error("Please wait a minute before requesting another code");
-  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
+  const code = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(6, "0");
   const numbers = await twilio("/IncomingPhoneNumbers.json?PageSize=1");
   const from = numbers.incoming_phone_numbers?.[0]?.phone_number;
   if (!from) throw new Error("No sending number on the SMS account");
