@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
+import { Route as AuthenticatedMarketplaceRouteImport } from './routes/_authenticated/marketplace'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
@@ -52,6 +53,12 @@ const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMarketplaceRoute =
+  AuthenticatedMarketplaceRouteImport.update({
+    id: '/marketplace',
+    path: '/marketplace',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   id: '/panel',
   path: '/panel',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/marketplace': typeof AuthenticatedMarketplaceRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/feed': typeof AuthenticatedFeedRoute
+  '/marketplace': typeof AuthenticatedMarketplaceRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
@@ -126,6 +135,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
+  '/_authenticated/marketplace': typeof AuthenticatedMarketplaceRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/chat/$id': typeof AuthenticatedChatIdRoute
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/contacts'
     | '/feed'
+    | '/marketplace'
     | '/panel'
     | '/reels'
     | '/chat/$id'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/contacts'
     | '/feed'
+    | '/marketplace'
     | '/panel'
     | '/reels'
     | '/chat/$id'
@@ -171,6 +183,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/contacts'
     | '/_authenticated/feed'
+    | '/_authenticated/marketplace'
     | '/_authenticated/panel'
     | '/_authenticated/reels'
     | '/_authenticated/chat/$id'
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFeedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/marketplace': {
+      id: '/_authenticated/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof AuthenticatedMarketplaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/panel': {
       id: '/_authenticated/panel'
       path: '/panel'
@@ -286,6 +306,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
+  AuthenticatedMarketplaceRoute: typeof AuthenticatedMarketplaceRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedChatIdRoute: typeof AuthenticatedChatIdRoute
@@ -298,6 +319,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
+  AuthenticatedMarketplaceRoute: AuthenticatedMarketplaceRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedChatIdRoute: AuthenticatedChatIdRoute,
