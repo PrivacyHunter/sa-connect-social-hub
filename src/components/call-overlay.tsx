@@ -54,7 +54,7 @@ export function useCall(conversationId: string, meId: string | undefined) {
       pc.onicecandidate = (e) => {
         if (e.candidate && meId) send({ type: "ice", from: meId, candidate: e.candidate.toJSON() });
       };
-      pc.ontrack = (e) => setRemoteStream(e.streams[0]);
+      pc.ontrack = (e) => setRemoteStream(e.streams[0] ?? null);
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") setStatus("connected");
         if (pc.connectionState === "failed") {
