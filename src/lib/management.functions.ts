@@ -4,6 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { canAssignRole, canManageAccount, type ManagementRole } from "./management-rules";
 
 export const getPanel = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const access = await context.supabase.rpc("account_can_write");
+  if (access.error) throw access.error;
+  if (!access.data) return { authorized: false as const };
   const { data: role, error } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId).maybeSingle();
   if (error) throw error;
   if (!role) return { authorized: false as const };
@@ -23,6 +26,8 @@ export const getPanel = createServerFn({ method: "POST" }).middleware([requireSu
 
 const actionSchema = z.object({ target: z.string().uuid().optional(), action: z.enum(["active","suspended","frozen","banned","deleted","role","reset","create","content"]), role: z.enum(["admin","owner","developer"]).optional(), email: z.string().email().max(255).optional(), password: z.string().min(8).max(128).optional(), table: z.enum(["posts","reels","videos","marketplace_listings"]).optional(), redirect: z.string().url().optional() });
 export const manageAccount = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(actionSchema).handler(async ({ context, data }) => {
+  const access = await context.supabase.rpc("account_can_write");
+  if (access.error || !access.data) throw new Error("This account cannot manage the platform");
   const { data: actor, error } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId).maybeSingle();
   if (error || !actor) throw new Error("Panel access denied");
   const actorRole = actor.role as ManagementRole;
