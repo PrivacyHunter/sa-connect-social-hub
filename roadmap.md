@@ -7,4 +7,7 @@
 - [x] Add real marketplace listings; publishing, sold state and removal verified.
 - [x] Add protected /panel with account/content management and role rules; delete currently deactivates accounts recoverably.
 - [x] Provision requested developer account securely; developer login, panel account creation/freeze and role tests verified.
-- [ ] Verify external invitation delivery and device contact picker on a real phone — requires user's device and messaging apps.
+- [ ] Verify external invitation delivery and device contact picker on a real phone — requires user's device and messaging apps.- [x] Hide panel from non-staff, merge transparent logo, add ticker/footer/social follow, income coming-soon.
+- [x] Levels 1–1000 with unique badges; email/phone verification card; username-only discovery; fix 8 critical security findings.
+- [ ] Phone SMS verification — needs an SMS provider connected.
+- [ ] Real social media links for footer — needs user's page addresses.

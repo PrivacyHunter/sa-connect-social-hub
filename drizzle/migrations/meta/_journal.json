@@ -15,6 +15,13 @@
       "when": 1793011376204,
       "tag": "0001_privacy_tightening_and_levels",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793011988101,
+      "tag": "0002_restrict_comment_reads",
+      "breakpoints": true
     }
   ]
 }
