@@ -3,7 +3,7 @@ import { Wallet } from "lucide-react";
 import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/_authenticated/income")({
-  head: () => pageHead("Income", "Earn from your content on S&A Connect — coming soon."),
+  head: () => pageHead("Income", "Earn from your content on SA Connect — coming soon."),
   component: Income,
 });
 

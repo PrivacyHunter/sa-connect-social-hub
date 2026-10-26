@@ -20,10 +20,10 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Sign in — S&A Connect" },
-      { name: "description", content: "Sign in or create your S&A Connect account." },
-      { property: "og:title", content: "Sign in — S&A Connect" },
-      { property: "og:description", content: "Join S&A Connect with Google or email." },
+      { title: "Sign in — SA Connect" },
+      { name: "description", content: "Sign in or create your SA Connect account." },
+      { property: "og:title", content: "Sign in — SA Connect" },
+      { property: "og:description", content: "Join SA Connect with Google or email." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:image", content: scene.url },
@@ -200,7 +200,7 @@ export function AuthPage() {
         <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Your connection, kept private.</p>
       </section>
       </main>
-      <footer className="auth-footer"><span>© S&A Connect</span><span>CHAT · SHARE · WATCH · CONNECT</span></footer>
+      <footer className="auth-footer"><span>© SA Connect</span><span>CHAT · SHARE · WATCH · CONNECT</span></footer>
     </div>
   );
 }

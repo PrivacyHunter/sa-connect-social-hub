@@ -27,10 +27,10 @@ import { UserAvatar } from "@/components/user-avatar";
 export const Route = createFileRoute("/_authenticated/videos/$id")({
   head: () => ({
     meta: [
-      { title: "Watch — S&A Connect" },
-      { name: "description", content: "Watch community videos and connect with creators on S&A Connect." },
-      { property: "og:title", content: "Watch — S&A Connect" },
-      { property: "og:description", content: "Watch community videos and connect with creators on S&A Connect." },
+      { title: "Watch — SA Connect" },
+      { name: "description", content: "Watch community videos and connect with creators on SA Connect." },
+      { property: "og:title", content: "Watch — SA Connect" },
+      { property: "og:description", content: "Watch community videos and connect with creators on SA Connect." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -150,7 +150,7 @@ function WatchPage() {
   async function share() {
     const url = window.location.href;
     try {
-      if (navigator.share) await navigator.share({ title: v?.title ?? "S&A Connect video", url });
+      if (navigator.share) await navigator.share({ title: v?.title ?? "SA Connect video", url });
       else {
         await navigator.clipboard.writeText(url);
         toast.success("Link copied");

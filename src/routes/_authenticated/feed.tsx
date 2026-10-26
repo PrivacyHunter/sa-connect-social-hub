@@ -27,9 +27,9 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/_authenticated/feed")({
   head: () => ({
     meta: [
-      { title: "Feed — S&A Connect" },
+      { title: "Feed — SA Connect" },
       { name: "description", content: "Stories, posts and conversations from the people you follow." },
-      { property: "og:title", content: "Feed — S&A Connect" },
+      { property: "og:title", content: "Feed — SA Connect" },
       { property: "og:description", content: "Stories, posts and conversations from the people you follow." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

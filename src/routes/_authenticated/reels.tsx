@@ -34,10 +34,10 @@ import { EmptyState } from "@/components/empty-state";
 export const Route = createFileRoute("/_authenticated/reels")({
   head: () => ({
     meta: [
-      { title: "Reels — S&A Connect" },
-      { name: "description", content: "Short vertical videos from the S&A Connect community." },
-      { property: "og:title", content: "Reels — S&A Connect" },
-      { property: "og:description", content: "Short vertical videos from the S&A Connect community." },
+      { title: "Reels — SA Connect" },
+      { name: "description", content: "Short vertical videos from the SA Connect community." },
+      { property: "og:title", content: "Reels — SA Connect" },
+      { property: "og:description", content: "Short vertical videos from the SA Connect community." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -155,7 +155,7 @@ function ReelItem({ reel, meId, onComments }: { reel: Reel; meId: string; onComm
   async function share() {
     const url = `${window.location.origin}/reels`;
     try {
-      if (navigator.share) await navigator.share({ title: "S&A Connect reel", url });
+      if (navigator.share) await navigator.share({ title: "SA Connect reel", url });
       else {
         await navigator.clipboard.writeText(url);
         toast.success("Link copied");
