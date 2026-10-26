@@ -19,6 +19,7 @@ import { useCurrentProfile } from "@/hooks/use-current-user";
 import { formatCount, parseHashtags, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Award } from "lucide-react";
+import { VerificationCard } from "@/components/verification-card";
 import { badgeName, experience, levelFromXp, xpForLevel } from "@/lib/levels";
 import type { Post, Profile, Reel, Video } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -173,6 +174,7 @@ function ProfilePage() {
           <span className="text-xs text-muted-foreground">{stats.data.xp} XP{stats.data.next !== null && ` / ${stats.data.next} for next level`}</span>
         </div>
       )}
+      {isMe && <VerificationCard />}
       {p.bio && <p className="mt-3 whitespace-pre-wrap px-4 text-sm">{p.bio}</p>}
 
       <div className="mt-4 flex gap-6 px-4 text-sm">
