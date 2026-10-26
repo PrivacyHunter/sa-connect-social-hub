@@ -45,7 +45,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.375rem;
   --background: oklch(0.984 0.003 247.858);
   --foreground: oklch(0.208 0.042 265.755);
   --card: oklch(1 0 0);
@@ -216,3 +216,24 @@
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .auth-panel:hover { transform: none; }
 }
+
+/* Signature surface: hairline grid + neon edge, used app-wide */
+body {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--primary) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--primary) 6%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-attachment: fixed;
+}
+.glass { box-shadow: inset 0 1px 0 color-mix(in oklab, var(--primary) 25%, transparent); }
+
+/* Calls */
+.call-stage { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; background: color-mix(in oklab, var(--background) 92%, transparent); backdrop-filter: blur(20px); }
+.call-remote { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.call-local { position: absolute; right: 20px; top: 20px; width: 160px; aspect-ratio: 3/4; object-fit: cover; border: 1px solid var(--primary); border-radius: var(--radius); box-shadow: 0 0 24px color-mix(in oklab, var(--primary) 40%, transparent); }
+.call-info { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.call-pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 0 var(--primary); animation: call-pulse 1.6s infinite; }
+@keyframes call-pulse { to { box-shadow: 0 0 0 22px transparent; } }
+.call-controls { position: absolute; bottom: 40px; display: flex; gap: 16px; }
+.call-btn { width: 56px; height: 56px; border-radius: 50%; }
+.call-btn svg { width: 22px; height: 22px; }
