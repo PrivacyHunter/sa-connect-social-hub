@@ -17,6 +17,7 @@ import { OnlineProvider } from "@/lib/presence";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Brand } from "@/components/brand";
 import { UserAvatar } from "@/components/user-avatar";
 import type { Profile } from "@/lib/types";
 
@@ -81,14 +82,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
         )}
       >
         <div className="flex items-center gap-2.5 px-4 py-5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-gold-deep font-display text-sm font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
-            S&A
-          </span>
-          {!collapsed && (
-            <span className="font-display text-lg font-bold tracking-tight">
-              S&A <span className="text-gradient-brand">Connect</span>
-            </span>
-          )}
+          <Brand compact={collapsed} />
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {NAV.map((item) => navItem(item, collapsed))}
@@ -146,12 +140,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
       {/* Mobile header */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-glass-border glass px-4 lg:hidden">
         <Link to="/feed" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-gold-deep font-display text-[10px] font-bold text-primary-foreground">
-            S&A
-          </span>
-          <span className="font-display text-base font-bold">
-            S&A <span className="text-gradient-brand">Connect</span>
-          </span>
+          <Brand />
         </Link>
         <div className="flex items-center gap-1">
           <ThemeToggle />
