@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import scene from "@/assets/brand-scene.asset.json";
+import scene from "@/assets/brand-scene.jpg";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
@@ -27,8 +27,6 @@ export const Route = createFileRoute("/auth")({
       { property: "og:description", content: "Join SA Connect with Google or email." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:image", content: scene.url },
-      { name: "twitter:image", content: scene.url },
     ],
   }),
   component: AuthPage,
@@ -116,7 +114,7 @@ export function AuthPage() {
 
   return (
     <div className="auth-stage">
-      <img src={scene.url} alt="" className="auth-backdrop" aria-hidden="true" />
+      <img src={scene} alt="" className="auth-backdrop" aria-hidden="true" />
       <header className="auth-header"><Brand /><ThemeToggle /></header>
       <main className="auth-main">
       <section className="auth-panel">
