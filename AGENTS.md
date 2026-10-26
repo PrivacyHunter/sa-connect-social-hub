@@ -15,3 +15,5 @@
 - Contact discovery matches only verified, opted-in emails; do not store uploaded address books or reveal non-opted-in identities.
 - Account restrictions are enforced through restrictive database and storage policies; frozen accounts are read-only and deactivated accounts retain recoverable records.
 - Marketplace listings use authenticated owner-scoped writes and the existing private media bucket; all rows come from users.
+- Profile visibility goes through can_view_profile (self, staff, connections, content creators); strangers are found only by exact username via find_user_by_username, so the full member list is never browsable.
+- Levels/badges are derived from activity counts (profile_stats + src/lib/levels.ts), not stored, so they cannot be edited by users.
