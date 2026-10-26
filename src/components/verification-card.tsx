@@ -57,6 +57,7 @@ export function VerificationCard() {
         <Mail className="h-4 w-4" /><span className="break-all">{email.address}</span>
         {email.verified ? <span className="text-primary">Verified</span> : <Button size="sm" variant="outline" disabled={busy} onClick={resendEmail}>Send verification email</Button>}
       </div>
+      {false && (
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Phone className="h-4 w-4" />
         {phoneVerified ? <><span>{phone}</span><span className="text-primary">Verified</span></> : sent ? (
@@ -65,6 +66,7 @@ export function VerificationCard() {
           <><Input className="w-52" type="tel" aria-label="Phone number" placeholder="+923001234567" value={phone} onChange={(e) => setPhone(e.target.value.trim())} /><Button size="sm" variant="outline" disabled={busy} onClick={sendCode}>Send code</Button></>
         )}
       </div>
+      )}
     </section>
   );
 }

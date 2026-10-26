@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { isDisposableEmail, passwordProblems } from "@/lib/signup-rules";
 import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -63,6 +64,9 @@ export function AuthPage() {
         if (error) throw error;
         navigate({ to: after, replace: true });
       } else {
+        if (isDisposableEmail(email)) throw new Error("Temporary or disposable email addresses are not allowed. Use your real email.");
+        const problems = passwordProblems(password);
+        if (problems.length) throw new Error("Password needs " + problems.join(", ") + ".");
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
