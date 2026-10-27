@@ -126,23 +126,72 @@ export type Database = {
           },
         ]
       }
+      conversation_keys: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          user_id: string
+          wrapped_by: string
+          wrapped_key: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          user_id: string
+          wrapped_by: string
+          wrapped_key: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          user_id?: string
+          wrapped_by?: string
+          wrapped_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_keys_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_keys_wrapped_by_fkey"
+            columns: ["wrapped_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_members: {
         Row: {
           conversation_id: string
           joined_at: string
           last_read_at: string | null
+          muted: boolean
           user_id: string
         }
         Insert: {
           conversation_id: string
           joined_at?: string
           last_read_at?: string | null
+          muted?: boolean
           user_id: string
         }
         Update: {
           conversation_id?: string
           joined_at?: string
           last_read_at?: string | null
+          muted?: boolean
           user_id?: string
         }
         Relationships: [
@@ -292,38 +341,110 @@ export type Database = {
           },
         ]
       }
+      message_deletes: {
+        Row: {
+          created_at: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_deletes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_deletes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_views: {
+        Row: {
+          message_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          message_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          message_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_views_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string | null
           conversation_id: string
           created_at: string
+          deleted_for_everyone: boolean
           duration_seconds: number | null
           file_name: string | null
           id: string
           kind: string
           media_url: string | null
+          one_view: boolean
           sender_id: string
         }
         Insert: {
           body?: string | null
           conversation_id: string
           created_at?: string
+          deleted_for_everyone?: boolean
           duration_seconds?: number | null
           file_name?: string | null
           id?: string
           kind?: string
           media_url?: string | null
+          one_view?: boolean
           sender_id: string
         }
         Update: {
           body?: string | null
           conversation_id?: string
           created_at?: string
+          deleted_for_everyone?: boolean
           duration_seconds?: number | null
           file_name?: string | null
           id?: string
           kind?: string
           media_url?: string | null
+          one_view?: boolean
           sender_id?: string
         }
         Relationships: [
@@ -337,6 +458,44 @@ export type Database = {
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_requests: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          reviewed_by: string | null
+          screenshot_path: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_by?: string | null
+          screenshot_path: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_by?: string | null
+          screenshot_path?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -505,6 +664,32 @@ export type Database = {
           },
         ]
       }
+      premium_access: {
+        Row: {
+          premium_until: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          premium_until: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          premium_until?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -513,6 +698,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          public_key: string | null
           username: string
         }
         Insert: {
@@ -522,6 +708,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          public_key?: string | null
           username: string
         }
         Update: {
@@ -531,6 +718,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          public_key?: string | null
           username?: string
         }
         Relationships: []
@@ -648,6 +836,7 @@ export type Database = {
           id: boolean
           instagram_url: string
           marquee: string[]
+          payment_info: string
           updated_at: string
           x_url: string
           youtube_url: string
@@ -657,6 +846,7 @@ export type Database = {
           id?: boolean
           instagram_url?: string
           marquee?: string[]
+          payment_info?: string
           updated_at?: string
           x_url?: string
           youtube_url?: string
@@ -666,6 +856,7 @@ export type Database = {
           id?: boolean
           instagram_url?: string
           marquee?: string[]
+          payment_info?: string
           updated_at?: string
           x_url?: string
           youtube_url?: string
@@ -920,6 +1111,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          public_key: string | null
           username: string
         }[]
         SetofOptions: {

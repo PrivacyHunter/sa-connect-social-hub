@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { startRingtone } from "@/lib/notify";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export function useCall(conversationId: string, meId: string | undefined) {
   const localRef = useRef<MediaStream | null>(null);
   const pendingOffer = useRef<Signal | null>(null);
   const pendingIce = useRef<RTCIceCandidateInit[]>([]);
+  const stopRingRef = useRef<(() => void) | null>(null);
 
   const send = useCallback(
     (payload: Signal) => channelRef.current?.send({ type: "broadcast", event: "call", payload }),
@@ -34,6 +36,8 @@ export function useCall(conversationId: string, meId: string | undefined) {
   );
 
   const cleanup = useCallback(() => {
+    stopRingRef.current?.();
+    stopRingRef.current = null;
     pcRef.current?.close();
     pcRef.current = null;
     localRef.current?.getTracks().forEach((t) => t.stop());
@@ -46,6 +50,20 @@ export function useCall(conversationId: string, meId: string | undefined) {
     setCameraOff(false);
     setStatus("idle");
   }, []);
+
+  // Loop the ringtone while an incoming call is ringing.
+  useEffect(() => {
+    if (status === "ringing") {
+      stopRingRef.current = startRingtone();
+    } else {
+      stopRingRef.current?.();
+      stopRingRef.current = null;
+    }
+    return () => {
+      stopRingRef.current?.();
+      stopRingRef.current = null;
+    };
+  }, [status]);
 
   const makePeer = useCallback(
     (stream: MediaStream) => {
