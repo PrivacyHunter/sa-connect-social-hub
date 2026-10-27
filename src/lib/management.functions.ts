@@ -53,6 +53,16 @@ export const manageAccount = createServerFn({ method: "POST" }).middleware([requ
     }
     const audit = await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: req.user_id, action: data.action });
     if (audit.error) throw audit.error;
+    const notify = await admin.from("user_notifications").insert({
+      user_id: req.user_id,
+      title: status === "approved" ? "Premium approved" : "Payment rejected",
+      body:
+        status === "approved"
+          ? "Your $2 payment was approved — Premium is active for 30 days."
+          : "Your premium payment proof was rejected. Please check the payment details on the Premium page and submit again.",
+      kind: status === "approved" ? "success" : "warning",
+    });
+    if (notify.error) throw notify.error;
     return { ok: true };
   }
   let target = data.target;
@@ -91,12 +101,24 @@ export const manageAccount = createServerFn({ method: "POST" }).middleware([requ
     } else if (data.action === "premium") {
       if (!target) throw new Error("Select an account");
       if (!data.months) {
+        const { data: cur } = await admin.from("premium_access").select("premium_until").eq("user_id", target).maybeSingle();
+        if (cur?.premium_until && new Date(cur.premium_until).getFullYear() > 9000) {
+          throw new Error("This account always keeps Premium");
+        }
         const result = await admin.from("premium_access").delete().eq("user_id", target); if (result.error) throw result.error;
+        const notify = await admin.from("user_notifications").insert({
+          user_id: target, title: "Premium removed",
+          body: "Your Premium access was removed by the team.", kind: "warning",
+        }); if (notify.error) throw notify.error;
       } else {
         const { data: existing } = await admin.from("premium_access").select("premium_until").eq("user_id", target).maybeSingle();
         const base = existing?.premium_until && new Date(existing.premium_until) > new Date() ? new Date(existing.premium_until) : new Date();
         const until = new Date(base.getTime() + data.months * 30 * 86400000).toISOString();
         const result = await admin.from("premium_access").upsert({ user_id: target, premium_until: until, updated_at: new Date().toISOString() }); if (result.error) throw result.error;
+        const notify = await admin.from("user_notifications").insert({
+          user_id: target, title: "Premium granted",
+          body: `The team granted you ${data.months} month${data.months === 1 ? "" : "s"} of Premium — enjoy!`, kind: "success",
+        }); if (notify.error) throw notify.error;
       }
     } else {
       const result = await admin.from("account_controls").upsert({ user_id: target, status: data.action, updated_at: new Date().toISOString() }); if (result.error) throw result.error;
