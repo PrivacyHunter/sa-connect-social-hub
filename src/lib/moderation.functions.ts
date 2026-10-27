@@ -56,7 +56,7 @@ export const inspectUser = createServerFn({ method: "POST" }).middleware([requir
 
 export const readConversation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(z.object({ conversation: z.string().uuid(), target: z.string().uuid() })).handler(async ({ context, data }) => {
   const admin = await requireSeniorStaff(context as Ctx);
-  const r = await admin.from("messages").select("id,body,kind,file_name,created_at,sender_id,profiles(username)").eq("conversation_id", data.conversation).order("created_at", { ascending: false }).limit(200);
+  const r = await admin.from("messages").select("id,body,kind,file_name,created_at,sender_id,profiles!messages_sender_id_fkey(username)").eq("conversation_id", data.conversation).order("created_at", { ascending: false }).limit(200);
   if (r.error) throw r.error;
   await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: data.target, action: `read_conversation:${data.conversation}` });
   return r.data.reverse();
