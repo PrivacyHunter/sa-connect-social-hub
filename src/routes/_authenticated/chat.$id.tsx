@@ -19,6 +19,7 @@ import {
   Send,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +69,7 @@ function ConversationPage() {
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
   const [oneView, setOneView] = useState(false);
+  const [pending, setPending] = useState<{ file: File; kind: "image" | "file"; url: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -236,11 +238,26 @@ function ConversationPage() {
     await send("text", t, null, null, null);
   }
 
-  async function attachFile(file: File, kind: "image" | "file") {
+  /** Preview chosen media on-site first; it only uploads when the user sends it. */
+  function pickFile(file: File) {
+    const kind: "image" | "file" = file.type.startsWith("image/") ? "image" : "file";
+    setPending({ file, kind, url: URL.createObjectURL(file) });
+  }
+
+  function cancelPending() {
+    if (pending) URL.revokeObjectURL(pending.url);
+    setPending(null);
+  }
+
+  async function sendPending() {
+    if (!pending || !me) return;
+    const { file, kind, url } = pending;
     setBusy(true);
     try {
       const path = await uploadFile("media", file);
-      await send(kind, null, path, file.name, null);
+      await send(kind, null, path, file.name, null, oneView);
+      URL.revokeObjectURL(url);
+      setPending(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
