@@ -100,7 +100,13 @@ function ConversationPage() {
       if (error) throw error;
       const mine = me!.id;
       const rows = (data ?? []) as unknown as Message[];
-      const visible = rows.filter((r) => !r.message_deletes?.some((d) => d.user_id === mine));
+      const visible = rows.filter((r) => {
+        if (r.message_deletes?.some((d) => d.user_id === mine)) return false;
+        // The database already hides an opened one-view message for non-premium
+        // viewers; this is just a client-side safety net.
+        if (r.one_view && !premium && r.sender_id !== mine && r.message_views?.some((v) => v.user_id === mine)) return false;
+        return true;
+      });
       return Promise.all(visible.map(async (r) => ({ ...r, body: await decryptStoredText(id, mine, r.body) })));
     },
   });
@@ -148,6 +154,21 @@ function ConversationPage() {
           ]);
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const row = payload.new as { id: string; deleted_for_everyone: boolean; one_view: boolean };
+          // Delete-for-everyone arrives as an UPDATE — patch it in immediately,
+          // then refetch so message_views/message_deletes stay accurate.
+          qc.setQueryData<Message[]>(["messages", id], (cur) =>
+            (cur ?? []).map((m) =>
+              m.id === row.id ? { ...m, deleted_for_everyone: row.deleted_for_everyone, one_view: row.one_view } : m,
+            ),
+          );
+          void qc.invalidateQueries({ queryKey: ["messages", id] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -176,7 +197,7 @@ function ConversationPage() {
   const isChannel = conv.data?.type === "channel";
   const canPost = !isChannel || conv.data?.created_by === me?.id;
 
-  async function send(kind: Message["kind"], body: string | null, mediaUrl: string | null, fileName: string | null, duration: number | null) {
+  async function send(kind: Message["kind"], body: string | null, mediaUrl: string | null, fileName: string | null, duration: number | null, oneViewFlag = oneView) {
     if (!me) return;
     const stored = body ? await encryptText(id, me.id, body) : null;
     const { data, error } = await supabase
@@ -189,7 +210,7 @@ function ConversationPage() {
         media_url: mediaUrl,
         file_name: fileName,
         duration_seconds: duration,
-        one_view: oneView,
+        one_view: oneViewFlag,
       })
       .select("*, profiles!messages_sender_id_fkey(*), message_deletes(user_id), message_views(user_id)")
       .single();
@@ -197,7 +218,7 @@ function ConversationPage() {
       toast.error(error.message);
       return;
     }
-    if (oneView) setOneView(false);
+    if (oneViewFlag) setOneView(false);
     const row = data as unknown as Message;
     const current = qc.getQueryData<Message[]>(["messages", id]) ?? [];
     if (!current.some((m) => m.id === row.id)) {
