@@ -93,7 +93,7 @@ function ConversationPage() {
     queryFn: async (): Promise<Message[]> => {
       const { data, error } = await supabase
         .from("messages")
-        .select("*, profiles(*), message_deletes(user_id), message_views(user_id)")
+        .select("*, profiles!messages_sender_id_fkey(*), message_deletes(user_id), message_views(user_id)")
         .eq("conversation_id", id)
         .order("created_at", { ascending: true })
         .limit(300);
@@ -191,7 +191,7 @@ function ConversationPage() {
         duration_seconds: duration,
         one_view: oneView,
       })
-      .select("*, profiles(*), message_deletes(user_id), message_views(user_id)")
+      .select("*, profiles!messages_sender_id_fkey(*), message_deletes(user_id), message_views(user_id)")
       .single();
     if (error) {
       toast.error(error.message);
