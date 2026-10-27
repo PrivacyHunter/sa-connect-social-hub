@@ -6,6 +6,17 @@ export interface Profile {
   avatar_url: string | null;
   banner_url: string | null;
   created_at: string;
+  referral_code?: string | null;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string;
+  kind: string;
+  read: boolean;
+  created_at: string;
 }
 
 export type ConversationType = "dm" | "group" | "channel";
