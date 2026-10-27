@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,34 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Notification } from "@/lib/types";
 
-export function useNotifications(meId: string | undefined) {
-  const qc = useQueryClient();
-  const query = useQuery({
-    queryKey: ["notifications", meId],
-    enabled: !!meId,
-    queryFn: async (): Promise<Notification[]> => {
-      const { data, error } = await supabase
-        .from("user_notifications")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return (data ?? []) as Notification[];
-    },
-    refetchInterval: 60_000,
-  });
-
-  // live updates when the backend inserts a notification for this user
-  if (meId) {
-    void useRealtimeNotifications(meId, qc);
-  }
-  return query;
-}
-
-import { useEffect } from "react";
-
-function useRealtimeNotifications(meId: string, qc: ReturnType<typeof useQueryClient>) {
+function useRealtimeNotifications(meId: string | undefined, qc: ReturnType<typeof useQueryClient>) {
   useEffect(() => {
+    if (!meId) return;
     const channel = supabase
       .channel(`notifications-${meId}`)
       .on(
@@ -57,6 +32,25 @@ function useRealtimeNotifications(meId: string, qc: ReturnType<typeof useQueryCl
   }, [meId, qc]);
 }
 
+export function useNotifications(meId: string | undefined) {
+  const qc = useQueryClient();
+  useRealtimeNotifications(meId, qc);
+  return useQuery({
+    queryKey: ["notifications", meId],
+    enabled: !!meId,
+    queryFn: async (): Promise<Notification[]> => {
+      const { data, error } = await supabase
+        .from("user_notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as Notification[];
+    },
+    refetchInterval: 60_000,
+  });
+}
+
 export function NotificationBell({ meId }: { meId: string | undefined }) {
   const { data } = useNotifications(meId);
   const qc = useQueryClient();
@@ -65,7 +59,8 @@ export function NotificationBell({ meId }: { meId: string | undefined }) {
   const unread = items.filter((n) => !n.read).length;
 
   async function markAll() {
-    await supabase.from("user_notifications").update({ read: true }).eq("user_id", meId!).eq("read", false);
+    if (!meId) return;
+    await supabase.from("user_notifications").update({ read: true }).eq("user_id", meId).eq("read", false);
     void qc.invalidateQueries({ queryKey: ["notifications", meId] });
   }
 
@@ -73,7 +68,12 @@ export function NotificationBell({ meId }: { meId: string | undefined }) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`} className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`}
+          className="relative"
+        >
           <Bell className="h-5 w-5" />
           {unread > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
