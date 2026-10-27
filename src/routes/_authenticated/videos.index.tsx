@@ -37,7 +37,7 @@ function VideoHubPage() {
         .order("created_at", { ascending: false })
         .limit(40);
       if (error) throw error;
-      return data as Video[];
+      return (data ?? []) as unknown as Video[];
     },
   });
 

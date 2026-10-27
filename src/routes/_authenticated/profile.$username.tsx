@@ -350,7 +350,7 @@ function VideosGrid({ channelId }: { channelId: string }) {
         .eq("channel_id", channelId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Video[];
+      return (data ?? []) as unknown as Video[];
     },
   });
   if (videos.isLoading) return <GridSkeleton />;
