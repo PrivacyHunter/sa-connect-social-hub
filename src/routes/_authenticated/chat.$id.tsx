@@ -481,11 +481,47 @@ function ConversationPage() {
       </div>
 
       {/* composer */}
-      <form onSubmit={submitText} className="flex items-center gap-2 border-t border-border p-3">
+      <form onSubmit={submitText} className="border-t border-border p-3">
+        {pending && (
+          <div className="mb-2 flex items-center gap-3 rounded-xl border border-border bg-card p-2">
+            {pending.kind === "image" ? (
+              <img src={pending.url} alt="Attachment preview" className="h-20 w-20 rounded-lg object-cover" />
+            ) : pending.file.type.startsWith("video/") ? (
+              <video src={pending.url} className="h-20 w-20 rounded-lg object-cover" muted playsInline />
+            ) : (
+              <span className="flex h-20 w-20 items-center justify-center rounded-lg bg-secondary">
+                <FileText className="h-6 w-6" />
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{pending.file.name}</p>
+              <Button
+                type="button"
+                size="sm"
+                variant={oneView ? "default" : "secondary"}
+                aria-pressed={oneView}
+                aria-label="Toggle one view for this attachment"
+                className="mt-1.5"
+                onClick={() => setOneView((v) => !v)}
+              >
+                <Eye className="mr-1.5 h-4 w-4" /> {oneView ? "One view: on" : "One view: off"}
+              </Button>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Button type="button" size="sm" disabled={busy} onClick={sendPending} aria-label="Send attachment">
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={cancelPending} aria-label="Cancel attachment">
+                <X className="h-4 w-4" /> Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
         {canPost ? (
           <>
-            <input type="file" accept="image/*" className="hidden" id={`img-${id}`} onChange={(e) => { const f = e.target.files?.[0]; if (f) attachFile(f, "image"); }} />
-            <input type="file" className="hidden" id={`file-${id}`} onChange={(e) => { const f = e.target.files?.[0]; if (f) attachFile(f, "file"); }} />
+            <input type="file" accept="image/*,video/*" className="hidden" id={`img-${id}`} onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); }} />
+            <input type="file" className="hidden" id={`file-${id}`} onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); }} />
             <Button type="button" variant="ghost" size="icon" asChild>
               <label htmlFor={`img-${id}`} aria-label="Send image" className="cursor-pointer">
                 <ImageIcon className="h-5 w-5" />
@@ -532,6 +568,7 @@ function ConversationPage() {
             Only channel admins can broadcast here — this feed is read-only for subscribers.
           </p>
         )}
+        </div>
       </form>
     </div>
   );
