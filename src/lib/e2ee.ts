@@ -20,9 +20,9 @@ function toB64(buf: ArrayBuffer | Uint8Array): string {
   for (const b of bytes) s += String.fromCharCode(b);
   return btoa(s);
 }
-function fromB64(s: string): Uint8Array {
+function fromB64(s: string): Uint8Array<ArrayBuffer> {
   const bin = atob(s);
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
@@ -30,11 +30,11 @@ function fromB64(s: string): Uint8Array {
 function pack(iv: Uint8Array, ct: ArrayBuffer): string {
   return `${PREFIX}${toB64(iv)}:${toB64(ct)}`;
 }
-function unpack(stored: string): { iv: Uint8Array; data: Uint8Array } | null {
+function unpack(stored: string): { iv: Uint8Array<ArrayBuffer>; data: Uint8Array<ArrayBuffer> } | null {
   const parts = stored.split(":");
   if (parts.length !== 3 || parts[0] !== "enc") return null;
   try {
-    return { iv: fromB64(parts[1]), data: fromB64(parts[2]) };
+    return { iv: fromB64(parts[1] ?? ""), data: fromB64(parts[2] ?? "") };
   } catch {
     return null;
   }
@@ -160,7 +160,7 @@ export async function getConversationKey(conversationId: string, meId: string): 
       }
     }
     if (inserts.length) {
-      await supabase.from("conversation_keys").insert(inserts).throwOnError(false);
+      await supabase.from("conversation_keys").upsert(inserts, { onConflict: "conversation_id,user_id,wrapped_by", ignoreDuplicates: true });
     }
     return key;
   })();

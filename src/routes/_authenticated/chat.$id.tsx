@@ -524,10 +524,10 @@ function MessageBubble({
   async function openOneView() {
     setOpened(true);
     if (!meId) return;
-    await supabase.from("message_views").insert({ message_id: message.id, user_id: meId }).throwOnError(false);
+    await supabase.from("message_views").insert({ message_id: message.id, user_id: meId });
     if (!premium) {
       // view-once: gone for non-premium viewers after a single look
-      await supabase.from("message_deletes").insert({ message_id: message.id, user_id: meId }).throwOnError(false);
+      await supabase.from("message_deletes").insert({ message_id: message.id, user_id: meId });
     }
   }
 
