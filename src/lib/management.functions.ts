@@ -80,7 +80,7 @@ export const manageAccount = createServerFn({ method: "POST" }).middleware([requ
   }
   if (data.action === "create") {
     if (!data.email || !data.password) throw new Error("Email and temporary password required");
-    const result = await admin.auth.admin.createUser({ email: data.email, password: data.password, email_confirm: false });
+    const result = await admin.auth.admin.createUser({ email: data.email, password: data.password, email_confirm: true });
     if (result.error) throw result.error;
     target = result.data.user.id;
   } else if (data.action === "content") {
