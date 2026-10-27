@@ -36,6 +36,13 @@
       "when": 1793015754948,
       "tag": "0004_block_disposable_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793066965673,
+      "tag": "0005_chat_encryption_delete_premium",
+      "breakpoints": true
     }
   ]
 }
