@@ -143,8 +143,8 @@ export async function getConversationKey(conversationId: string, meId: string): 
         if (key) return key;
       }
     }
-    if (rows?.length) return null; // keys exist but none could be unwrapped
-    // First sender: create a conversation key and wrap it for every member.
+    // No row could be unwrapped (e.g. the member's browser keys changed):
+    // rotate — create a fresh conversation key and re-wrap it for everyone.
     const raw = crypto.getRandomValues(new Uint8Array(32));
     const key = await subtle().importKey("raw", raw, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
     const inserts: { conversation_id: string; user_id: string; wrapped_by: string; wrapped_key: string }[] = [];
@@ -160,7 +160,9 @@ export async function getConversationKey(conversationId: string, meId: string): 
       }
     }
     if (inserts.length) {
-      await supabase.from("conversation_keys").upsert(inserts, { onConflict: "conversation_id,user_id,wrapped_by", ignoreDuplicates: true });
+      await supabase
+        .from("conversation_keys")
+        .upsert(inserts, { onConflict: "conversation_id,user_id,wrapped_by" });
     }
     return key;
   })();
@@ -172,7 +174,7 @@ export async function getConversationKey(conversationId: string, meId: string): 
 /** Encrypts message text for storage; falls back to plaintext when E2EE is unavailable. */
 export async function encryptText(conversationId: string, meId: string, text: string): Promise<string> {
   const key = await getConversationKey(conversationId, meId);
-  if (!key) return text;
+  if (!key) throw new Error("Encryption keys are not ready — open the app once, then try again");
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await subtle().encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
   return pack(iv, ct);
