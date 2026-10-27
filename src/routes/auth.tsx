@@ -13,11 +13,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import scene from "@/assets/brand-scene.jpg";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+  validateSearch: (search: Record<string, unknown>): { redirect?: string; ref?: string } => {
     const raw = search["redirect"];
     const redirect =
       typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
-    return redirect ? { redirect } : {};
+    const refRaw = search["ref"];
+    const ref = typeof refRaw === "string" && refRaw.trim() ? refRaw.trim().toUpperCase() : undefined;
+    return { ...(redirect ? { redirect } : {}), ...(ref ? { ref } : {}) };
   },
   head: () => ({
     meta: [
@@ -39,11 +41,28 @@ export function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [referral, setReferral] = useState(search.ref ?? "");
+  const [refBy, setRefBy] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const after = search.redirect ?? "/feed";
+
+  // Live check of a referral code: show who invited the new user
+  useEffect(() => {
+    const code = referral.trim().toUpperCase();
+    if (!code) {
+      setRefBy(null);
+      return;
+    }
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("referral_preview", { p_code: code });
+      const row = (data as { display_name: string; username: string }[] | null)?.[0];
+      setRefBy(row ? `${row.display_name} (@${row.username})` : "");
+    }, 400);
+    return () => clearTimeout(t);
+  }, [referral]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -69,7 +88,10 @@ export function AuthPage() {
           email,
           password,
           options: {
-            data: { display_name: name.trim() || email.split("@")[0] },
+            data: {
+              display_name: name.trim() || email.split("@")[0],
+              referral_code: referral.trim().toUpperCase() || undefined,
+            },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -138,6 +160,28 @@ export function AuthPage() {
                 placeholder="Your name"
                 autoComplete="name"
               />
+            </div>
+          )}
+          {mode === "signup" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="auth-ref">Referral code (optional)</Label>
+              <Input
+                id="auth-ref"
+                value={referral}
+                onChange={(e) => setReferral(e.target.value.toUpperCase())}
+                placeholder="Friend's code, e.g. 7F3K2M9Q"
+                maxLength={12}
+                className="tracking-widest"
+              />
+              {referral.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  {refBy === null
+                    ? "Checking code…"
+                    : refBy === ""
+                      ? "Code not recognized — check with your friend"
+                      : `Invited by ${refBy} ✓`}
+                </p>
+              )}
             </div>
           )}
           <div className="space-y-1.5">

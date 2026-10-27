@@ -19,6 +19,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { IncomePopup, Marquee, SiteFooter } from "@/components/site-chrome";
 import { ChatNotifier } from "@/components/chat-notifier";
+import { NotificationBell } from "@/components/notification-bell";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile } from "@/hooks/use-current-user";
 import { OnlineProvider } from "@/lib/presence";
@@ -134,6 +135,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
           </button>
           <div className="my-1 h-px bg-border" />
           <div className={cn("flex items-center gap-1", collapsed ? "flex-col" : "px-1")}>
+            <NotificationBell meId={me?.id} />
             <ThemeToggle />
             <Button
               variant="ghost"
@@ -164,6 +166,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
           <Brand />
         </Link>
         <div className="flex items-center gap-1">
+          <NotificationBell meId={me?.id} />
           <Link to="/contacts" aria-label="Contacts" className="p-2"><Users className="h-5 w-5" /></Link>
           <Link to="/marketplace" aria-label="Marketplace" className="p-2"><ShoppingBag className="h-5 w-5" /></Link>
           <Link to="/premium" aria-label="Premium" className="p-2"><Crown className="h-5 w-5" /></Link>
