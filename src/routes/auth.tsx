@@ -59,7 +59,7 @@ export function AuthPage() {
     const t = setTimeout(async () => {
       const { data } = await supabase.rpc("referral_preview", { p_code: code });
       const row = (data as { display_name: string; username: string }[] | null)?.[0];
-      setRefBy(row ? `${row.display_name} (@${row.username})` : null);
+      setRefBy(row ? `${row.display_name} (@${row.username})` : "");
     }, 400);
     return () => clearTimeout(t);
   }, [referral]);
@@ -175,7 +175,11 @@ export function AuthPage() {
               />
               {referral.trim() && (
                 <p className="text-xs text-muted-foreground">
-                  {refBy ? `Invited by ${refBy} ✓` : "Checking code…"}
+                  {refBy === null
+                    ? "Checking code…"
+                    : refBy === ""
+                      ? "Code not recognized — check with your friend"
+                      : `Invited by ${refBy} ✓`}
                 </p>
               )}
             </div>
