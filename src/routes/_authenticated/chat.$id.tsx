@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Link, useNavigate, createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Bell,
+  BellOff,
   Download,
+  Eye,
   FileText,
   Image as ImageIcon,
   Loader2,
@@ -13,15 +16,18 @@ import {
   Paperclip,
   Pin,
   Play,
-  Plus,
   Send,
+  Trash2,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile } from "@/hooks/use-current-user";
+import { usePremium } from "@/hooks/use-premium";
 import { useMediaSrc } from "@/hooks/use-media-url";
 import { uploadFile } from "@/lib/media";
+import { decryptStoredText, encryptText } from "@/lib/e2ee";
+import { oneViewReopenable } from "@/lib/chat-rules";
 import { formatClockTime, formatDuration, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Conversation, Message } from "@/lib/types";
@@ -32,6 +38,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user-avatar";
 import { CallOverlay, useCall } from "@/components/call-overlay";
@@ -56,9 +63,11 @@ function ConversationPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: me } = useCurrentProfile();
+  const { premium } = usePremium(me?.id);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [oneView, setOneView] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -70,7 +79,7 @@ function ConversationPage() {
     queryFn: async (): Promise<Conversation | null> => {
       const { data, error } = await supabase
         .from("conversations")
-        .select("*, conversation_members(user_id, last_read_at, profiles(*))")
+        .select("*, conversation_members(user_id, last_read_at, muted, profiles(*))")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -80,35 +89,70 @@ function ConversationPage() {
 
   const messages = useQuery({
     queryKey: ["messages", id],
+    enabled: !!me,
     queryFn: async (): Promise<Message[]> => {
       const { data, error } = await supabase
         .from("messages")
-        .select("*, profiles(*)")
+        .select("*, profiles(*), message_deletes(user_id), message_views(user_id)")
         .eq("conversation_id", id)
         .order("created_at", { ascending: true })
         .limit(300);
       if (error) throw error;
-      return data as Message[];
+      const mine = me!.id;
+      const rows = (data ?? []) as unknown as Message[];
+      const visible = rows.filter((r) => !r.message_deletes?.some((d) => d.user_id === mine));
+      return Promise.all(visible.map(async (r) => ({ ...r, body: await decryptStoredText(id, mine, r.body) })));
     },
   });
 
-  // realtime: new messages refresh the thread + list
+  // realtime: decrypt and append new messages directly for instant delivery
   useEffect(() => {
     const channel = supabase
       .channel(`messages-${id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${id}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ["messages", id] });
+        async (payload) => {
+          const row = payload.new as {
+            id: string;
+            conversation_id: string;
+            sender_id: string;
+            body: string | null;
+            kind: Message["kind"];
+            media_url: string | null;
+            file_name: string | null;
+            duration_seconds: number | null;
+            one_view: boolean;
+            deleted_for_everyone: boolean;
+            created_at: string;
+          };
           qc.invalidateQueries({ queryKey: ["conversations"] });
+          if (!me) return;
+          const current = qc.getQueryData<Message[]>(["messages", id]) ?? [];
+          if (current.some((m) => m.id === row.id)) return;
+          const convCache = qc.getQueryData<Conversation | null>(["conversation", id]);
+          const profile =
+            convCache?.conversation_members?.find((m) => m.user_id === row.sender_id)?.profiles ?? {
+              id: row.sender_id,
+              username: "?",
+              display_name: "Member",
+              bio: "",
+              avatar_url: null,
+              banner_url: null,
+              created_at: row.created_at,
+            };
+          const body = await decryptStoredText(id, me.id, row.body);
+          qc.setQueryData<Message[]>(["messages", id], [
+            ...current,
+            { ...row, body, profiles: profile, message_deletes: [], message_views: [] },
+          ]);
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [id, qc]);
+  }, [id, qc, me]);
 
   // mark read + scroll to bottom
   useEffect(() => {
@@ -126,27 +170,40 @@ function ConversationPage() {
 
   const members = conv.data?.conversation_members ?? [];
   const other = members.find((m) => m.user_id !== me?.id);
+  const myMember = members.find((m) => m.user_id === me?.id);
   const isDm = conv.data?.type === "dm";
   const title = isDm ? other?.profiles.display_name : conv.data?.name;
   const isChannel = conv.data?.type === "channel";
   const canPost = !isChannel || conv.data?.created_by === me?.id;
 
-  async function send(kind: "text" | "image" | "file" | "voice", body: string | null, mediaUrl: string | null, fileName: string | null, duration: number | null) {
+  async function send(kind: Message["kind"], body: string | null, mediaUrl: string | null, fileName: string | null, duration: number | null) {
     if (!me) return;
-    const { error } = await supabase.from("messages").insert({
-      conversation_id: id,
-      sender_id: me.id,
-      body,
-      kind,
-      media_url: mediaUrl,
-      file_name: fileName,
-      duration_seconds: duration,
-    });
+    const stored = body ? await encryptText(id, me.id, body) : null;
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: id,
+        sender_id: me.id,
+        body: stored,
+        kind,
+        media_url: mediaUrl,
+        file_name: fileName,
+        duration_seconds: duration,
+        one_view: oneView,
+      })
+      .select("*, profiles(*), message_deletes(user_id), message_views(user_id)")
+      .single();
     if (error) {
       toast.error(error.message);
       return;
     }
-    qc.invalidateQueries({ queryKey: ["messages", id] });
+    if (oneView) setOneView(false);
+    const row = data as unknown as Message;
+    const current = qc.getQueryData<Message[]>(["messages", id]) ?? [];
+    if (!current.some((m) => m.id === row.id)) {
+      const decrypted = { ...row, body: await decryptStoredText(id, me.id, row.body) };
+      qc.setQueryData<Message[]>(["messages", id], [...current, decrypted]);
+    }
     qc.invalidateQueries({ queryKey: ["conversations"] });
   }
 
@@ -220,6 +277,23 @@ function ConversationPage() {
     navigate({ to: "/chat" });
   }
 
+  async function toggleMute() {
+    if (!me) return;
+    const muted = !!myMember?.muted;
+    const { error } = await supabase
+      .from("conversation_members")
+      .update({ muted: !muted })
+      .eq("conversation_id", id)
+      .eq("user_id", me.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["conversation", id] });
+    qc.invalidateQueries({ queryKey: ["conversations"] });
+    toast.success(muted ? "Notifications unmuted" : "Chat muted");
+  }
+
   async function pinLast() {
     const last = messages.data?.[messages.data.length - 1];
     if (!last) {
@@ -244,6 +318,28 @@ function ConversationPage() {
     }
     qc.invalidateQueries({ queryKey: ["conversation", id] });
     toast.success("Announcement pinned");
+  }
+
+  async function deleteForMe(messageId: string) {
+    if (!me) return;
+    const { error } = await supabase.from("message_deletes").insert({ message_id: messageId, user_id: me.id });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.setQueryData<Message[]>(["messages", id], (cur) => (cur ?? []).filter((m) => m.id !== messageId));
+  }
+
+  async function deleteForEveryone(messageId: string) {
+    const { error } = await supabase.from("messages").update({ deleted_for_everyone: true }).eq("id", messageId);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.setQueryData<Message[]>(["messages", id], (cur) =>
+      (cur ?? []).map((m) => (m.id === messageId ? { ...m, deleted_for_everyone: true } : m)),
+    );
+    toast.success("Message deleted for everyone");
   }
 
   const lastMessage = messages.data?.[messages.data.length - 1];
@@ -271,11 +367,12 @@ function ConversationPage() {
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold">{title ?? "Loading…"}</h2>
           <p className="truncate text-xs text-muted-foreground">
+            {myMember?.muted && <BellOff className="mr-1 inline h-3 w-3" />}
             {isDm
               ? other
-                ? `${members.length} member · ${timeAgo(other.profiles.created_at)} joined`
-                : ""
-              : `${members.length} ${members.length === 1 ? "member" : "members"}${isChannel ? " · broadcast channel" : " · group"}`}
+                ? `${members.length} member · ${timeAgo(other.profiles.created_at)} joined · encrypted`
+                : "encrypted"
+              : `${members.length} ${members.length === 1 ? "member" : "members"}${isChannel ? " · broadcast channel · encrypted" : " · group · encrypted"}`}
           </p>
         </div>
         <Button variant="ghost" size="icon" aria-label="Voice call" onClick={() => call.start(false)}>
@@ -292,11 +389,16 @@ function ConversationPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={toggleMute}>
+              {myMember?.muted ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+              {myMember?.muted ? "Unmute notifications" : "Mute notifications"}
+            </DropdownMenuItem>
             {isChannel && conv.data?.created_by === me?.id && (
               <DropdownMenuItem onClick={pinLast}>
                 <Pin className="h-4 w-4" /> Pin latest message
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={leave}
@@ -327,7 +429,15 @@ function ConversationPage() {
           </p>
         )}
         {messages.data?.map((m) => (
-          <MessageBubble key={m.id} message={m} mine={m.sender_id === me?.id} />
+          <MessageBubble
+            key={m.id}
+            message={m}
+            mine={m.sender_id === me?.id}
+            meId={me?.id ?? ""}
+            premium={premium}
+            onDeleteForMe={deleteForMe}
+            onDeleteForEveryone={deleteForEveryone}
+          />
         ))}
         <div ref={bottomRef} />
       </div>
@@ -358,10 +468,22 @@ function ConversationPage() {
             >
               {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />}
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-pressed={oneView}
+              aria-label="One view: next message can be seen only once"
+              title="One view — next message disappears after the recipient opens it once"
+              onClick={() => setOneView((v) => !v)}
+              className={cn(oneView && "text-gold")}
+            >
+              <Eye className="h-5 w-5" />
+            </Button>
             <Input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder={recording ? "Recording voice note…" : "Type a message"}
+              placeholder={oneView ? "One-view message — type and send" : recording ? "Recording voice note…" : "Type a message"}
             />
             <Button type="submit" size="icon" disabled={!text.trim()} aria-label="Send">
               <Send className="h-4 w-4" />
@@ -377,11 +499,68 @@ function ConversationPage() {
   );
 }
 
-function MessageBubble({ message, mine }: { message: Message; mine: boolean }) {
+function MessageBubble({
+  message,
+  mine,
+  meId,
+  premium,
+  onDeleteForMe,
+  onDeleteForEveryone,
+}: {
+  message: Message;
+  mine: boolean;
+  meId: string;
+  premium: boolean;
+  onDeleteForMe: (id: string) => void;
+  onDeleteForEveryone: (id: string) => void;
+}) {
   const { data: mediaSrc } = useMediaSrc(message.media_url ? "media" : null, message.media_url);
+  const [opened, setOpened] = useState(false);
+  const viewedByMe = message.message_views?.some((v) => v.user_id === meId) ?? false;
+  const viewed = viewedByMe || opened;
+  const tombstone = message.deleted_for_everyone && !premium;
+  const locked = !mine && message.one_view && !viewed;
+
+  async function openOneView() {
+    setOpened(true);
+    if (!meId) return;
+    await supabase.from("message_views").insert({ message_id: message.id, user_id: meId }).throwOnError(false);
+    if (!premium) {
+      // view-once: gone for non-premium viewers after a single look
+      await supabase.from("message_deletes").insert({ message_id: message.id, user_id: meId }).throwOnError(false);
+    }
+  }
+
+  const label = message.one_view ? "One view" : null;
+
   return (
-    <div className={cn("flex items-end gap-2", mine ? "justify-end" : "justify-start")}>
+    <div className={cn("group flex items-end gap-1", mine ? "justify-end" : "justify-start")}>
       {!mine && <UserAvatar profile={message.profiles} size="sm" />}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 self-center opacity-0 transition-opacity group-hover:opacity-100"
+            aria-label="Message options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align={mine ? "end" : "start"}>
+          <DropdownMenuItem onClick={() => onDeleteForMe(message.id)}>
+            <Trash2 className="h-4 w-4" /> Delete for me
+          </DropdownMenuItem>
+          {mine && (
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => onDeleteForEveryone(message.id)}
+            >
+              <Trash2 className="h-4 w-4" /> Delete for everyone
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
       <div
         className={cn(
           "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",
@@ -390,44 +569,93 @@ function MessageBubble({ message, mine }: { message: Message; mine: boolean }) {
             : "rounded-bl-md border border-border bg-card",
         )}
       >
-        {!mine && (
+        {!mine && !tombstone && (
           <div className="mb-0.5 text-xs font-semibold text-gold">{message.profiles.display_name}</div>
         )}
-        {message.kind === "text" && <p className="whitespace-pre-wrap break-words">{message.body}</p>}
-        {message.kind === "image" &&
-          (mediaSrc ? (
-            <a href={mediaSrc} target="_blank" rel="noreferrer">
-              <img src={mediaSrc} alt="Shared image" className="max-h-72 rounded-xl object-cover" />
-            </a>
-          ) : (
-            <div className="h-40 w-56 animate-pulse rounded-xl bg-muted" />
-          ))}
-        {message.kind === "voice" && mediaSrc && (
-          <div className="flex items-center gap-2 py-1">
-            <span className={cn("flex h-8 w-8 items-center justify-center rounded-full", mine ? "bg-primary-foreground/20" : "bg-secondary")}>
-              <Play className="h-4 w-4" />
-            </span>
-            <div>
-              <audio controls src={mediaSrc} className="h-8 max-w-[220px]" preload="none" />
-              <div className="text-[11px] opacity-70">Voice note · {formatDuration(message.duration_seconds)}</div>
-            </div>
-          </div>
-        )}
-        {message.kind === "file" && (
-          <a
-            href={mediaSrc ?? "#"}
-            download={message.file_name ?? undefined}
-            target="_blank"
-            rel="noreferrer"
-            className={cn(
-              "flex items-center gap-2 rounded-xl px-2 py-1.5",
-              mine ? "bg-primary-foreground/15" : "bg-secondary",
-            )}
+        {tombstone ? (
+          <p className="flex items-center gap-1.5 italic opacity-80">
+            <Trash2 className="h-4 w-4" /> This message was deleted
+          </p>
+        ) : locked ? (
+          <button
+            onClick={openOneView}
+            className="flex items-center gap-2 rounded-xl px-2 py-1.5"
+            aria-label="Open one-view message"
           >
-            <FileText className="h-5 w-5" />
-            <span className="max-w-[180px] truncate underline">{message.file_name ?? "Download file"}</span>
-            <Download className="h-4 w-4" />
-          </a>
+            <span className={cn("flex h-9 w-9 items-center justify-center rounded-full", mine ? "bg-primary-foreground/20" : "bg-secondary")}>
+              <Eye className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-medium">{message.kind === "text" ? "Hidden message" : "Tap to view once"}</span>
+              <span className="block text-[11px] opacity-70">Disappears after one look</span>
+            </span>
+          </button>
+        ) : (
+          <>
+            {message.kind === "text" && <p className="whitespace-pre-wrap break-words">{message.body ?? "(encrypted message)"}</p>}
+            {message.kind === "image" &&
+              (mediaSrc ? (
+                <span className="relative block">
+                  <a href={mediaSrc} target="_blank" rel="noreferrer">
+                    <img src={mediaSrc} alt="Shared image" className="max-h-72 rounded-xl object-cover" />
+                  </a>
+                  {premium && message.one_view && (
+                    <a
+                      href={mediaSrc}
+                      download={message.file_name ?? "photo"}
+                      className="absolute bottom-2 right-2 rounded-md bg-black/60 p-1.5 text-white hover:bg-black/80"
+                      aria-label="Save one-view photo"
+                      title="Save photo (Premium)"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  )}
+                </span>
+              ) : (
+                <div className="h-40 w-56 animate-pulse rounded-xl bg-muted" />
+              ))}
+            {message.kind === "voice" && mediaSrc && (
+              <div className="flex items-center gap-2 py-1">
+                <span className={cn("flex h-8 w-8 items-center justify-center rounded-full", mine ? "bg-primary-foreground/20" : "bg-secondary")}>
+                  <Play className="h-4 w-4" />
+                </span>
+                <div>
+                  <audio controls src={mediaSrc} className="h-8 max-w-[220px]" preload="none" />
+                  <div className="text-[11px] opacity-70">Voice note · {formatDuration(message.duration_seconds)}</div>
+                </div>
+              </div>
+            )}
+            {message.kind === "file" && (
+              <a
+                href={mediaSrc ?? "#"}
+                download={message.file_name ?? undefined}
+                target="_blank"
+                rel="noreferrer"
+                className={cn(
+                  "flex items-center gap-2 rounded-xl px-2 py-1.5",
+                  mine ? "bg-primary-foreground/15" : "bg-secondary",
+                )}
+              >
+                <FileText className="h-5 w-5" />
+                <span className="max-w-[180px] truncate underline">{message.file_name ?? "Download file"}</span>
+                <Download className="h-4 w-4" />
+              </a>
+            )}
+            {message.one_view && (
+              <div className={cn("mt-0.5 text-[10px]", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                {label}
+                {mine
+                  ? message.message_views?.length
+                    ? " · opened ✓"
+                    : " · not opened yet"
+                  : premium
+                    ? " · kept for you (Premium)"
+                    : viewed
+                      ? " · opened — disappears when you leave"
+                      : ""}
+              </div>
+            )}
+          </>
         )}
         <div className={cn("mt-0.5 text-right text-[10px]", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>
           {formatClockTime(message.created_at)}

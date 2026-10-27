@@ -18,6 +18,7 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedIncomeRouteImport } from './routes/_authenticated/income'
 import { Route as AuthenticatedMarketplaceRouteImport } from './routes/_authenticated/marketplace'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedPremiumRouteImport } from './routes/_authenticated/premium'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat.index'
 import { Route as AuthenticatedChatIdRouteImport } from './routes/_authenticated/chat.$id'
@@ -70,6 +71,11 @@ const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   path: '/panel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPremiumRoute = AuthenticatedPremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReelsRoute = AuthenticatedReelsRouteImport.update({
   id: '/reels',
   path: '/reels',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/income': typeof AuthenticatedIncomeRoute
   '/marketplace': typeof AuthenticatedMarketplaceRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/premium': typeof AuthenticatedPremiumRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/income': typeof AuthenticatedIncomeRoute
   '/marketplace': typeof AuthenticatedMarketplaceRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/premium': typeof AuthenticatedPremiumRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/chat/$id': typeof AuthenticatedChatIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/_authenticated/income': typeof AuthenticatedIncomeRoute
   '/_authenticated/marketplace': typeof AuthenticatedMarketplaceRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/premium': typeof AuthenticatedPremiumRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/chat/$id': typeof AuthenticatedChatIdRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/income'
     | '/marketplace'
     | '/panel'
+    | '/premium'
     | '/reels'
     | '/chat/$id'
     | '/profile/$username'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/income'
     | '/marketplace'
     | '/panel'
+    | '/premium'
     | '/reels'
     | '/chat/$id'
     | '/profile/$username'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/_authenticated/income'
     | '/_authenticated/marketplace'
     | '/_authenticated/panel'
+    | '/_authenticated/premium'
     | '/_authenticated/reels'
     | '/_authenticated/chat/$id'
     | '/_authenticated/profile/$username'
@@ -277,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPanelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/premium': {
+      id: '/_authenticated/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof AuthenticatedPremiumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reels': {
       id: '/_authenticated/reels'
       path: '/reels'
@@ -328,6 +347,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIncomeRoute: typeof AuthenticatedIncomeRoute
   AuthenticatedMarketplaceRoute: typeof AuthenticatedMarketplaceRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedPremiumRoute: typeof AuthenticatedPremiumRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedChatIdRoute: typeof AuthenticatedChatIdRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
@@ -342,6 +362,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIncomeRoute: AuthenticatedIncomeRoute,
   AuthenticatedMarketplaceRoute: AuthenticatedMarketplaceRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedPremiumRoute: AuthenticatedPremiumRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedChatIdRoute: AuthenticatedChatIdRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
