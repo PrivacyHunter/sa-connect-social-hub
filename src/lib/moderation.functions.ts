@@ -18,6 +18,7 @@ const url = z.string().trim().max(300).refine((v) => v === "" || /^https:\/\/[^\
 const settingsSchema = z.object({
   marquee: z.array(z.string().trim().min(1).max(160)).max(12),
   facebook_url: url, instagram_url: url, youtube_url: url, x_url: url,
+  payment_info: z.string().max(4000),
 });
 
 export const saveSiteSettings = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(settingsSchema).handler(async ({ context, data }) => {
@@ -26,6 +27,16 @@ export const saveSiteSettings = createServerFn({ method: "POST" }).middleware([r
   if (r.error) throw r.error;
   await admin.from("admin_audit").insert({ actor_id: context.userId, action: "site_settings" });
   return { ok: true };
+});
+
+/** Signed, short-lived URL for a payment screenshot (staff only). */
+export const paymentScreenshotUrl = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(z.object({ path: z.string().min(1).max(400) })).handler(async ({ context, data }) => {
+  const admin = await requireSeniorStaff(context as Ctx);
+  const { data: role } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId).maybeSingle();
+  if (!role) throw new Error("Panel access denied");
+  const r = await admin.storage.from("payments").createSignedUrl(data.path, 600);
+  if (r.error) throw r.error;
+  return r.data.signedUrl;
 });
 
 export const inspectUser = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(z.object({ target: z.string().uuid() })).handler(async ({ context, data }) => {

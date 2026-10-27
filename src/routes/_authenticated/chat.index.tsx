@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, MessagesSquare, Megaphone, Search, Users, Plus } from "lucide-react";
+import { BellOff, MessageCircle, MessagesSquare, Megaphone, Search, Users, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { decryptStoredText } from "@/lib/e2ee";
 import { useCurrentProfile } from "@/hooks/use-current-user";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -44,10 +45,17 @@ function ChatListPage() {
     queryFn: async (): Promise<Conversation[]> => {
       const { data, error } = await supabase
         .from("conversations")
-        .select("*, conversation_members(user_id, last_read_at, profiles(*))")
+        .select("*, conversation_members(user_id, last_read_at, muted, profiles(*))")
         .order("last_message_at", { ascending: false, nullsFirst: false });
       if (error) throw error;
-      return data as Conversation[];
+      const rows = (data ?? []) as Conversation[];
+      // Encrypted previews are decrypted locally with the conversation key.
+      return Promise.all(rows.map(async (c) => {
+        if (c.last_message_body?.startsWith("enc:")) {
+          return { ...c, last_message_body: (await decryptStoredText(c.id, me?.id ?? "", c.last_message_body)) ?? "Encrypted message" };
+        }
+        return c;
+      }));
     },
     enabled: !!me,
   });
@@ -149,7 +157,8 @@ function ChatListPage() {
                   {c.last_message_body ? (c.type === "channel" ? "📣 " : "") + c.last_message_body : "Say hello 👋"}
                 </span>
               </span>
-              {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gold" />}
+            {mine?.muted && <BellOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Muted chat" />}
+            {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gold" />}
             </Link>
           );
         })}

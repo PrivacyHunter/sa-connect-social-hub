@@ -14,9 +14,11 @@ import {
   ShoppingBag,
   ShieldCheck,
   Wallet,
+  Crown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { IncomePopup, Marquee, SiteFooter } from "@/components/site-chrome";
+import { ChatNotifier } from "@/components/chat-notifier";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile } from "@/hooks/use-current-user";
 import { OnlineProvider } from "@/lib/presence";
@@ -35,6 +37,7 @@ const NAV = [
   { to: "/contacts", label: "Contacts", icon: Users },
   { to: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { to: "/income", label: "Income", icon: Wallet },
+  { to: "/premium", label: "Premium", icon: Crown },
 ] as const;
 
 export function AppShell() {
@@ -163,6 +166,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
         <div className="flex items-center gap-1">
           <Link to="/contacts" aria-label="Contacts" className="p-2"><Users className="h-5 w-5" /></Link>
           <Link to="/marketplace" aria-label="Marketplace" className="p-2"><ShoppingBag className="h-5 w-5" /></Link>
+          <Link to="/premium" aria-label="Premium" className="p-2"><Crown className="h-5 w-5" /></Link>
           <ThemeToggle />
           {me && (
             <Link to={profileTo} aria-label="Your profile">
@@ -179,6 +183,7 @@ function Shell({ me }: { me: Profile | null | undefined }) {
         <SiteFooter />
       </main>
       <IncomePopup />
+      <ChatNotifier meId={me?.id} />
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 items-center border-t border-glass-border glass pb-[env(safe-area-inset-bottom)] lg:hidden">

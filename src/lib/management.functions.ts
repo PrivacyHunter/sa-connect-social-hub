@@ -11,20 +11,23 @@ export const getPanel = createServerFn({ method: "POST" }).middleware([requireSu
   if (error) throw error;
   if (!role) return { authorized: false as const };
   const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
-  const [users, roles, controls, posts, reels, videos, listings] = await Promise.all([
+  const [users, roles, controls, posts, reels, videos, listings, payments, premium] = await Promise.all([
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }), admin.from("user_roles").select("*"), admin.from("account_controls").select("*"),
     admin.from("posts").select("id,caption,author_id,created_at").order("created_at", { ascending: false }).limit(200),
     admin.from("reels").select("id,caption,author_id,created_at").order("created_at", { ascending: false }).limit(200),
     admin.from("videos").select("id,title,channel_id,created_at").order("created_at", { ascending: false }).limit(200),
     admin.from("marketplace_listings").select("id,title,seller_id,created_at").order("created_at", { ascending: false }).limit(200),
+    admin.from("payment_requests").select("id,user_id,screenshot_path,note,status,created_at").order("created_at", { ascending: false }).limit(200),
+    admin.from("premium_access").select("user_id,premium_until"),
   ]);
-  for (const result of [users, roles, controls, posts, reels, videos, listings]) if (result.error) throw result.error;
+  for (const result of [users, roles, controls, posts, reels, videos, listings, payments, premium]) if (result.error) throw result.error;
   return { authorized: true as const, role: role.role as ManagementRole, userId: context.userId,
-    users: users.data.users.map(u => ({ id: u.id, email: u.email ?? "", created: u.created_at, role: roles.data?.find(r => r.user_id === u.id)?.role as ManagementRole | undefined, status: controls.data?.find(c => c.user_id === u.id)?.status ?? "active" })),
+    users: users.data.users.map(u => ({ id: u.id, email: u.email ?? "", created: u.created_at, role: roles.data?.find(r => r.user_id === u.id)?.role as ManagementRole | undefined, status: controls.data?.find(c => c.user_id === u.id)?.status ?? "active", premium_until: premium.data?.find(p => p.user_id === u.id)?.premium_until ?? null })),
+    payments: payments.data ?? [],
     content: [ ...(posts.data ?? []).map(p => ({ id: p.id, title: p.caption, userId: p.author_id, type: "posts" as const })), ...(reels.data ?? []).map(p => ({ id: p.id, title: p.caption, userId: p.author_id, type: "reels" as const })), ...(videos.data ?? []).map(p => ({ id: p.id, title: p.title, userId: p.channel_id, type: "videos" as const })), ...(listings.data ?? []).map(p => ({ id: p.id, title: p.title, userId: p.seller_id, type: "marketplace_listings" as const })) ] };
 });
 
-const actionSchema = z.object({ target: z.string().uuid().optional(), action: z.enum(["active","suspended","frozen","banned","deleted","role","reset","create","content"]), role: z.enum(["admin","owner","developer"]).optional(), email: z.string().email().max(255).optional(), password: z.string().min(8).max(128).optional(), table: z.enum(["posts","reels","videos","marketplace_listings"]).optional(), redirect: z.string().url().optional() });
+const actionSchema = z.object({ target: z.string().uuid().optional(), action: z.enum(["active","suspended","frozen","banned","deleted","role","reset","create","content","premium","approve_payment","reject_payment"]), role: z.enum(["admin","owner","developer"]).optional(), email: z.string().email().max(255).optional(), password: z.string().min(8).max(128).optional(), table: z.enum(["posts","reels","videos","marketplace_listings"]).optional(), redirect: z.string().url().optional(), months: z.number().int().min(0).max(24).optional() });
 export const manageAccount = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(actionSchema).handler(async ({ context, data }) => {
   const access = await context.supabase.rpc("account_can_write");
   if (access.error || !access.data) throw new Error("This account cannot manage the platform");
@@ -33,6 +36,25 @@ export const manageAccount = createServerFn({ method: "POST" }).middleware([requ
   const actorRole = actor.role as ManagementRole;
   if (data.action === "role" && (!data.role || !canAssignRole(actorRole, data.role))) throw new Error("Only an owner can appoint developers. Admins cannot change roles.");
   const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+  // Payment approvals target a request id, not a user account.
+  if (data.action === "approve_payment" || data.action === "reject_payment") {
+    if (!data.target) throw new Error("Select a payment request");
+    const { data: req, error: reqError } = await admin.from("payment_requests").select("id,user_id,status").eq("id", data.target).maybeSingle();
+    if (reqError || !req) throw new Error("Payment request not found");
+    const status = data.action === "approve_payment" ? "approved" : "rejected";
+    const upd = await admin.from("payment_requests").update({ status, reviewed_by: context.userId }).eq("id", data.target);
+    if (upd.error) throw upd.error;
+    if (status === "approved") {
+      const { data: existing } = await admin.from("premium_access").select("premium_until").eq("user_id", req.user_id).maybeSingle();
+      const base = existing?.premium_until && new Date(existing.premium_until) > new Date() ? new Date(existing.premium_until) : new Date();
+      const until = new Date(base.getTime() + 30 * 86400000).toISOString();
+      const up = await admin.from("premium_access").upsert({ user_id: req.user_id, premium_until: until, updated_at: new Date().toISOString() });
+      if (up.error) throw up.error;
+    }
+    const audit = await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: req.user_id, action: data.action });
+    if (audit.error) throw audit.error;
+    return { ok: true };
+  }
   let target = data.target;
   if (data.action === "content") {
     if (!target || !data.table) throw new Error("Select content");
@@ -66,11 +88,21 @@ export const manageAccount = createServerFn({ method: "POST" }).middleware([requ
       const origin = request.headers.get("origin");
       if (!origin || data.redirect !== `${origin}/reset-password`) throw new Error("Invalid reset destination");
       const result = await admin.auth.resetPasswordForEmail(user.data.user.email, { redirectTo: data.redirect }); if (result.error) throw result.error;
+    } else if (data.action === "premium") {
+      if (!target) throw new Error("Select an account");
+      if (!data.months) {
+        const result = await admin.from("premium_access").delete().eq("user_id", target); if (result.error) throw result.error;
+      } else {
+        const { data: existing } = await admin.from("premium_access").select("premium_until").eq("user_id", target).maybeSingle();
+        const base = existing?.premium_until && new Date(existing.premium_until) > new Date() ? new Date(existing.premium_until) : new Date();
+        const until = new Date(base.getTime() + data.months * 30 * 86400000).toISOString();
+        const result = await admin.from("premium_access").upsert({ user_id: target, premium_until: until, updated_at: new Date().toISOString() }); if (result.error) throw result.error;
+      }
     } else {
       const result = await admin.from("account_controls").upsert({ user_id: target, status: data.action, updated_at: new Date().toISOString() }); if (result.error) throw result.error;
       const authResult = await admin.auth.admin.updateUserById(target, { ban_duration: ["suspended","banned","deleted"].includes(data.action) ? "876000h" : "none" }); if (authResult.error) throw authResult.error;
     }
   }
-  const audit = await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: target ?? null, action: data.action === "role" ? `role:${data.role}` : data.action }); if (audit.error) throw audit.error;
+  const audit = await admin.from("admin_audit").insert({ actor_id: context.userId, target_id: target ?? null, action: data.action === "role" ? `role:${data.role}` : data.action === "premium" ? `premium:${data.months ?? 0}m` : data.action }); if (audit.error) throw audit.error;
   return { ok: true };
 });
