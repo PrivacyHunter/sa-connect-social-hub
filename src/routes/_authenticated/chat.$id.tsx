@@ -594,15 +594,18 @@ function MessageBubble({
   const viewedByMe = message.message_views?.some((v) => v.user_id === meId) ?? false;
   const viewed = viewedByMe || opened;
   const tombstone = message.deleted_for_everyone && !premium;
+  const expired = !mine && message.one_view && viewedByMe && !premium;
   const locked = !mine && message.one_view && !viewed;
 
   async function openOneView() {
     setOpened(true);
     if (!meId) return;
-    await supabase.from("message_views").insert({ message_id: message.id, user_id: meId });
+    const views = await supabase.from("message_views").insert({ message_id: message.id, user_id: meId });
+    if (views.error) toast.error(views.error.message);
     if (!premium) {
       // view-once: gone for non-premium viewers after a single look
-      await supabase.from("message_deletes").insert({ message_id: message.id, user_id: meId });
+      const del = await supabase.from("message_deletes").insert({ message_id: message.id, user_id: meId });
+      if (del.error) toast.error(del.error.message);
     }
   }
 
@@ -650,6 +653,10 @@ function MessageBubble({
         {tombstone ? (
           <p className="flex items-center gap-1.5 italic opacity-80">
             <Trash2 className="h-4 w-4" /> This message was deleted
+          </p>
+        ) : expired ? (
+          <p className="flex items-center gap-1.5 italic opacity-80">
+            <Eye className="h-4 w-4" /> One-view message expired
           </p>
         ) : locked ? (
           <button
@@ -700,7 +707,9 @@ function MessageBubble({
                 </div>
               </div>
             )}
-            {message.kind === "file" && (
+            {message.kind === "file" && mediaSrc && /\.(mp4|webm|mov|m4v)$/i.test(message.file_name ?? "") ? (
+              <video src={mediaSrc} controls preload="metadata" className="max-h-72 rounded-xl" />
+            ) : message.kind === "file" && (
               <a
                 href={mediaSrc ?? "#"}
                 download={message.file_name ?? undefined}
