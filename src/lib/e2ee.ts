@@ -171,7 +171,7 @@ export async function getConversationKey(conversationId: string, meId: string): 
   return promise;
 }
 
-/** Encrypts message text for storage; falls back to plaintext when E2EE is unavailable. */
+/** Encrypts message text for storage; throws when no conversation key is available. */
 export async function encryptText(conversationId: string, meId: string, text: string): Promise<string> {
   const key = await getConversationKey(conversationId, meId);
   if (!key) throw new Error("Encryption keys are not ready — open the app once, then try again");
