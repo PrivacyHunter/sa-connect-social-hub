@@ -258,6 +258,64 @@ export type Database = {
           },
         ]
       }
+      credit_events: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_progress: {
+        Row: {
+          messages_sent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          messages_sent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          messages_sent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -699,6 +757,7 @@ export type Database = {
           display_name: string
           id: string
           public_key: string | null
+          referral_code: string | null
           username: string
         }
         Insert: {
@@ -709,6 +768,7 @@ export type Database = {
           display_name: string
           id: string
           public_key?: string | null
+          referral_code?: string | null
           username: string
         }
         Update: {
@@ -719,6 +779,7 @@ export type Database = {
           display_name?: string
           id?: string
           public_key?: string | null
+          referral_code?: string | null
           username?: string
         }
         Relationships: []
@@ -824,6 +885,39 @@ export type Database = {
           {
             foreignKeyName: "reels_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          referred_id?: string
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -958,6 +1052,44 @@ export type Database = {
           {
             foreignKeyName: "subscriptions_subscriber_id_fkey"
             columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1112,6 +1244,7 @@ export type Database = {
           display_name: string
           id: string
           public_key: string | null
+          referral_code: string | null
           username: string
         }[]
         SetofOptions: {
@@ -1149,6 +1282,13 @@ export type Database = {
           posts: number
           reels: number
           videos: number
+        }[]
+      }
+      referral_preview: {
+        Args: { p_code: string }
+        Returns: {
+          display_name: string
+          username: string
         }[]
       }
     }
