@@ -26,6 +26,7 @@ export interface Conversation {
 export interface ConversationMember {
   user_id: string;
   last_read_at: string | null;
+  muted: boolean;
   profiles: Profile;
 }
 
@@ -38,8 +39,21 @@ export interface Message {
   media_url: string | null;
   file_name: string | null;
   duration_seconds: number | null;
+  one_view: boolean;
+  deleted_for_everyone: boolean;
   created_at: string;
   profiles: Profile;
+  message_deletes: { user_id: string }[];
+  message_views: { user_id: string }[];
+}
+
+export interface PaymentRequest {
+  id: string;
+  user_id: string;
+  screenshot_path: string;
+  note: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
 }
 
 export interface PostMedia {

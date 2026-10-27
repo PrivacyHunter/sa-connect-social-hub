@@ -25,7 +25,7 @@ export function signedUrl(bucket: string, path: string): Promise<string> {
 }
 
 /** Upload a file into the given bucket under the caller's own folder. Returns the storage path. */
-export async function uploadFile(bucket: "avatars" | "media", file: File): Promise<string> {
+export async function uploadFile(bucket: "avatars" | "media" | "payments", file: File): Promise<string> {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
   if (!user) throw new Error("Not signed in");
