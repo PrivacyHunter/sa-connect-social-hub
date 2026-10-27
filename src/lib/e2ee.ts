@@ -133,9 +133,11 @@ export async function getConversationKey(conversationId: string, meId: string): 
     if (!members.has(meId)) return null; // not a member of this conversation
     const { data: rows } = await supabase
       .from("conversation_keys")
-      .select("wrapped_by, wrapped_key")
+      .select("wrapped_by, wrapped_key, created_at")
       .eq("conversation_id", conversationId)
-      .eq("user_id", meId);
+      .eq("user_id", meId)
+      .order("created_at", { ascending: false });
+    // Newest wrap first: after a key rotation everyone converges on the latest key.
     for (const row of (rows ?? []) as { wrapped_by: string; wrapped_key: string }[]) {
       const peer = members.get(row.wrapped_by);
       if (peer) {
@@ -189,11 +191,15 @@ export async function decryptStoredText(
   if (!stored || !stored.startsWith(PREFIX)) return stored;
   const packed = unpack(stored);
   const key = await getConversationKey(conversationId, meId);
-  if (!packed || !key) return null;
+  if (!packed || !key) {
+    convKeyCache.delete(conversationId); // re-derive on the next attempt (e.g. after a rotation)
+    return null;
+  }
   try {
     const plain = await subtle().decrypt({ name: "AES-GCM", iv: packed.iv }, key, packed.data);
     return new TextDecoder().decode(plain);
   } catch {
+    convKeyCache.delete(conversationId);
     return null;
   }
 }
